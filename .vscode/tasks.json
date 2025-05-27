@@ -83,6 +83,26 @@
                 "isDefault": false
             },
             "detail": "compiler: C:\\raylib\\w64devkit\\bin\\g++.exe"
+        },
+        {
+            "label": "build exe",
+            "type": "process",
+            "command": "C:/raylib/w64devkit/bin/mingw32-make.exe",
+            "args": [
+                "RAYLIB_PATH=C:/raylib/raylib",
+                "PROJECT_NAME=dansweeper", // change to desired EXE name
+                "OBJS=src/*.cpp",
+                "BUILD_MODE=RELEASE",
+                "RAYLIB_LIBTYPE=STATIC" // <-- ensure static link
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "release build with static raylib"
         }
     ]
 }
