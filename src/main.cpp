@@ -8,8 +8,8 @@ using namespace std;
 
 enum GameState
 {
-    STATE_MENU,
-    STATE_GAME
+    MENU,
+    GAME,
 };
 
 enum GridState
@@ -19,7 +19,13 @@ enum GridState
     FLAG,
 };
 
-enum TileType
+enum CellContent
+{
+    CELL_EMPTY,
+    CELL_BOMB,
+};
+
+enum CellRender
 {
     TILE_HIDDEN,
     TILE_REVEALED,
@@ -27,15 +33,23 @@ enum TileType
     TILE_BOMB
 };
 
+struct Cell
+{
+    CellContent content;
+    CellRender render;
+    int bombsAround;
+};
+
+const int TEXTUREMAP_TILE_SIZE = 16;
+
 int main()
 {
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "dansweeper");
     SetTargetFPS(120);
     GuiLoadStyle("styles/default/style_default.rgs");
 
-    GameState state = STATE_MENU;
-
-    const int TEXTUREMAP_TILE_SIZE = 16;
+    GameState state = MENU;
 
     const int GRID_CELL_SIZE = 64;
     const int GRID_ROWS = 9;
@@ -45,10 +59,22 @@ int main()
     double startTime = GetTime();
 
     const Rectangle TILE_RECTS[] = {
-        {1 * 16, 2 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE},          // TILE_HIDDEN
-        {0 * 16, 2 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE},          // TILE_REVEALED
-        {0, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // TILE_FLAG
-        {TEXTUREMAP_TILE_SIZE, 0, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // TILE_BOMB
+        {0 * 16, 0 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // 1
+        {1 * 16, 0 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // 2
+        {2 * 16, 0 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // 3
+        {3 * 16, 0 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // 4
+        {0 * 16, 1 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // 5
+        {1 * 16, 1 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // 6
+        {2 * 16, 1 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // 7
+        {3 * 16, 1 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // 8
+        {0 * 16, 2 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // blank revealed
+        {1 * 16, 2 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // blank unrevealed
+        {2 * 16, 2 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // flag
+        {3 * 16, 2 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // bomb wrong
+        {0 * 16, 3 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // ? revealed
+        {1 * 16, 3 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // ? unrevealed
+        {2 * 16, 3 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // bomb normal
+        {3 * 16, 3 * 16, TEXTUREMAP_TILE_SIZE, TEXTUREMAP_TILE_SIZE}, // bomb hit
     };
 
     // Load texture atlas
@@ -59,15 +85,15 @@ int main()
         BeginDrawing();
         ClearBackground(BLACK);
 
-        if (state == STATE_MENU)
+        if (state == MENU)
         {
             if (GuiButton((Rectangle){300, 250, 200, 50}, "START GAME"))
             {
-                state = STATE_GAME;
+                state = GAME;
                 startTime = GetTime();
             }
         }
-        else if (state == STATE_GAME)
+        else if (state == GAME)
         {
             for (int y = 0; y < GRID_ROWS; y++)
             {
@@ -75,7 +101,7 @@ int main()
                 {
                     Rectangle dest = {x * GRID_CELL_SIZE, y * GRID_CELL_SIZE, GRID_CELL_SIZE, GRID_CELL_SIZE};
 
-                    TileType type = revealed[y][x] ? TILE_REVEALED : TILE_HIDDEN;
+                    CellRender type = revealed[y][x] ? TILE_REVEALED : TILE_HIDDEN;
                     DrawTexturePro(tileAtlas, TILE_RECTS[type], dest, (Vector2){0, 0}, 0, WHITE);
                     // Mouse interaction
                     bool clicked = CheckCollisionPointRec(GetMousePosition(), dest) &&
