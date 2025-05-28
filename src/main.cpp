@@ -12,13 +12,6 @@ enum GameState
     GAME,
 };
 
-enum GridState
-{
-    REVEALED,
-    BOMB,
-    FLAG,
-};
-
 enum CellContent
 {
     CELL_EMPTY,
@@ -27,17 +20,31 @@ enum CellContent
 
 enum CellRender
 {
-    TILE_HIDDEN,
-    TILE_REVEALED,
-    TILE_FLAG,
-    TILE_BOMB
+    RENDER_NUMBER_1,          // 0
+    RENDER_NUMBER_2,          // 1
+    RENDER_NUMBER_3,          // 2
+    RENDER_NUMBER_4,          // 3
+    RENDER_NUMBER_5,          // 4
+    RENDER_NUMBER_6,          // 5
+    RENDER_NUMBER_7,          // 6
+    RENDER_NUMBER_8,          // 7
+    RENDER_EMPTY_REVEALED,    // 8
+    RENDER_EMPTY_HIDDEN,      // 9
+    RENDER_FLAG,              // 10
+    RENDER_BOMB_WRONG,        // 11 (flagged incorrectly)
+    RENDER_QUESTION_REVEALED, // 12
+    RENDER_QUESTION_HIDDEN,   // 13
+    RENDER_BOMB_NORMAL,       // 14
+    RENDER_BOMB_HIT           // 15
 };
 
 struct Cell
 {
-    CellContent content;
-    CellRender render;
-    int bombsAround;
+    CellContent content; // What’s in the cell (empty or bomb)
+    CellRender render;   // What to draw
+    int bombsAround;     // Used for numbered cells
+    bool revealed;       // Has the player revealed this cell?
+    bool flagged;        // Has the player flagged this cell?
 };
 
 const int TEXTUREMAP_TILE_SIZE = 16;
@@ -54,7 +61,20 @@ int main()
     const int GRID_CELL_SIZE = 64;
     const int GRID_ROWS = 9;
     const int GRID_COLS = 9;
-    bool revealed[GRID_ROWS][GRID_COLS] = {false};
+    Cell grid[GRID_ROWS][GRID_COLS];
+
+    for (int y = 0; y < GRID_ROWS; y++)
+    {
+        for (int x = 0; x < GRID_COLS; x++)
+        {
+            grid[y][x] = {
+                .content = CELL_EMPTY,
+                .render = RENDER_EMPTY_HIDDEN,
+                .bombsAround = 0,
+                .revealed = false,
+                .flagged = false};
+        }
+    }
 
     double startTime = GetTime();
 
@@ -99,21 +119,54 @@ int main()
             {
                 for (int x = 0; x < GRID_COLS; x++)
                 {
-                    Rectangle dest = {x * GRID_CELL_SIZE, y * GRID_CELL_SIZE, GRID_CELL_SIZE, GRID_CELL_SIZE};
+                    Rectangle dest = {
+                        x * GRID_CELL_SIZE,
+                        y * GRID_CELL_SIZE,
+                        GRID_CELL_SIZE,
+                        GRID_CELL_SIZE};
 
-                    CellRender type = revealed[y][x] ? TILE_REVEALED : TILE_HIDDEN;
-                    DrawTexturePro(tileAtlas, TILE_RECTS[type], dest, (Vector2){0, 0}, 0, WHITE);
-                    // Mouse interaction
-                    bool clicked = CheckCollisionPointRec(GetMousePosition(), dest) &&
-                                   IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-                    if (clicked)
+                    // Get mouse state
+                    Vector2 mousePos = GetMousePosition();
+                    bool hovered = CheckCollisionPointRec(mousePos, dest);
+
+                    // Handle left click (reveal)
+                    if (hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !grid[y][x].flagged && !grid[y][x].revealed)
                     {
-                        revealed[y][x] = true;
-                        // Print to console
-                        cout << "Clicked cell (" << x << ", " << y << ") at "
-                             << std::fixed << std::setprecision(3)
-                             << (GetTime() - startTime) << " seconds" << std::endl;
+                        grid[y][x].revealed = true;
+
+                        // Update render type based on bomb count
+                        if (grid[y][x].content == CELL_BOMB)
+                        {
+                            grid[y][x].render = RENDER_BOMB_HIT;
+                        }
+                        else if (grid[y][x].bombsAround == 0)
+                        {
+                            grid[y][x].render = RENDER_EMPTY_REVEALED;
+                        }
+                        else
+                        {
+                            grid[y][x].render = (CellRender)(RENDER_NUMBER_1 + grid[y][x].bombsAround - 1);
+                        }
+
+                        std::cout << "Clicked cell (" << x << ", " << y << ") at "
+                                  << std::fixed << std::setprecision(3)
+                                  << (GetTime() - startTime) << " seconds" << std::endl;
                     }
+
+                    // Handle right click (flag toggle)
+                    if (hovered && IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && !grid[y][x].revealed)
+                    {
+                        grid[y][x].flagged = !grid[y][x].flagged;
+                        grid[y][x].render = grid[y][x].flagged ? RENDER_FLAG : RENDER_EMPTY_HIDDEN;
+
+                        std::cout << (grid[y][x].flagged ? "Flagged" : "Unflagged")
+                                  << " cell (" << x << ", " << y << ") at "
+                                  << std::fixed << std::setprecision(3)
+                                  << (GetTime() - startTime) << " seconds" << std::endl;
+                    }
+
+                    // Draw the cell based on its current render type
+                    DrawTexturePro(tileAtlas, TILE_RECTS[grid[y][x].render], dest, (Vector2){0, 0}, 0, WHITE);
                 }
             }
         }
