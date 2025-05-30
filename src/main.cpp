@@ -22,7 +22,7 @@ int main()
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "dansweeper");
     SetTargetFPS(120);
-    GuiLoadStyle("styles/default/style_default.rgs");
+    GuiLoadStyle("styles/genesis/style_genesis.rgs");
 
     Font customFont = LoadFontEx("resources/ProggyClean.ttf", 13, 0, 250);
     SetTextureFilter(customFont.texture, TEXTURE_FILTER_POINT);
@@ -50,6 +50,15 @@ int main()
 
     // Load texture atlas
     Texture2D tileAtlas = LoadTexture("resources/texturemap.png");
+
+    GridSettings gs = {
+        1,
+        1,
+        1,
+        "wasd",
+    };
+
+    Grid *gameGrid = new Grid(gs);
 
     while (!WindowShouldClose())
     {
