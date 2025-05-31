@@ -1,11 +1,21 @@
 {
-	"files.exclude": {
-		"**/.git": true,
-		"**/.svn": true,
-		"**/.hg": true,
-		"**/CVS": true,
-		"**/.DS_Store": true,
-		"**/*.o": true,
-		"**/*.exe": true,
-	}
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/*.o": true,
+        "**/*.exe": true,
+    },
+    "files.associations": {
+        "*.tsx": "typescriptreact",
+        "*.h": "cpp",
+        "new": "cpp",
+        "iostream": "cpp",
+        "*.m": "cpp",
+        "string": "cpp",
+        "format": "cpp",
+        "cmath": "cpp"
+    }
 }
