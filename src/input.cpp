@@ -1,5 +1,7 @@
 #include "headers/input.h"
 
+#include <iostream>
+
 #include "headers/render.h"
 #include "raylib.h"
 #include "raymath.h"
@@ -8,8 +10,10 @@ namespace input {
 
 const float zoomSpeed = 0.1f;
 const float panSpeed = 1.0f;
+HoveredTile hvt;
 
-void HandleInput() {
+void HandleInput(Grid* grid) {
+    static float targetZoom = 1.0f;
     Camera2D& camera = render::GetCamera();
 
     // Mouse drag panning (right-click)
@@ -25,10 +29,11 @@ void HandleInput() {
         Vector2 mousePos = GetMousePosition();
         Vector2 worldBefore = GetScreenToWorld2D(mousePos, camera);
 
-        camera.zoom *= (1.0f + zoomSpeed * wheel);
-        if (camera.zoom < 1.0f) camera.zoom = 1.0f;
-        if (camera.zoom > 10.0f) camera.zoom = 10.0f;
+        // Update target zoom based on scroll
+        targetZoom *= (1.0f + zoomSpeed * wheel);
+        targetZoom = Clamp(targetZoom, 1.0f, 10.0f);
 
+        // Adjust camera.target to keep zoom centered on cursor
         Vector2 worldAfter = GetScreenToWorld2D(mousePos, camera);
         Vector2 diff = Vector2Subtract(worldBefore, worldAfter);
         camera.target = Vector2Add(camera.target, diff);
@@ -56,6 +61,42 @@ void HandleInput() {
     } else {
         camera.target.y = Clamp(camera.target.y, minY, maxY);
     }
+
+    camera.zoom = Lerp(camera.zoom, targetZoom, 0.15f);
+
+    Vector2 mouse = GetMousePosition();
+    Vector2 world = GetScreenToWorld2D(mouse, render::GetCamera());
+
+    int x = (int)(world.x / 16);
+    int y = (int)(world.y / 16);
+
+    if (x >= 0 && x < grid->width && y >= 0 && y < grid->height) {
+        hvt = {true, x, y};
+    } else {
+        hvt = {false, -1, -1};
+    }
+
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        if (x >= 0 && x < grid->width &&
+            y >= 0 && y < grid->height) {
+            // Reveal the tile
+            grid->cells[y][x].renderTile = TILE_REVEALED;
+            std::cout << grid->cells[y][x].renderTile;
+        }
+    }
+
+    if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+        if (x >= 0 && x < grid->width &&
+            y >= 0 && y < grid->height && grid->cells[y][x].renderTile != TILE_REVEALED) {
+            // Reveal the tile
+            grid->cells[y][x].renderTile = TILE_FLAG;
+            std::cout << grid->cells[y][x].renderTile;
+        }
+    }
+}
+
+HoveredTile GetHoveredTile() {
+    return hvt;
 }
 
 }  // namespace input

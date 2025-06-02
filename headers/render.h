@@ -3,15 +3,16 @@
 
 #include <string>
 
+#include "headers/grid.h"
 #include "raylib.h"
 
 namespace render {
 void LoadAssets();
 void UnloadAssets();
-void DrawBoard(const std::string& s);
+void DrawBoard(const Grid* grid);
 
 Camera2D& GetCamera();
-void CenterCameraOnMap();
+void CenterCameraOnMap(const Grid* grid);
 
 // Expose tilemap bounds
 int GetMapPixelWidth();
