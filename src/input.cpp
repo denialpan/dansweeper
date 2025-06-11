@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "headers/render.h"
+#include "headers/tile.h"
 #include "raylib.h"
 #include "raymath.h"
 
@@ -67,8 +68,8 @@ void HandleInput(Grid* grid) {
     Vector2 mouse = GetMousePosition();
     Vector2 world = GetScreenToWorld2D(mouse, render::GetCamera());
 
-    int x = (int)(world.x / 16);
-    int y = (int)(world.y / 16);
+    int x = (int)(world.x / TILE_TEXTURE_PIXEL_SIZE);
+    int y = (int)(world.y / TILE_TEXTURE_PIXEL_SIZE);
 
     if (x >= 0 && x < grid->width && y >= 0 && y < grid->height) {
         hvt = {true, x, y};
@@ -81,6 +82,7 @@ void HandleInput(Grid* grid) {
             y >= 0 && y < grid->height) {
             // Reveal the tile
             grid->cells[y][x].renderTile = TILE_REVEALED;
+
             std::cout << grid->cells[y][x].renderTile;
         }
     }
@@ -88,7 +90,7 @@ void HandleInput(Grid* grid) {
     if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
         if (x >= 0 && x < grid->width &&
             y >= 0 && y < grid->height && grid->cells[y][x].renderTile != TILE_REVEALED) {
-            // Reveal the tile
+            // flag the tile
             grid->cells[y][x].renderTile = TILE_FLAG;
             std::cout << grid->cells[y][x].renderTile;
         }
