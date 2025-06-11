@@ -1,5 +1,7 @@
 #pragma once
 
+const int TILE_TEXTURE_PIXEL_SIZE = 16;
+
 enum TileId {
     TILE_1 = 0,
     TILE_2 = 1,
@@ -12,9 +14,9 @@ enum TileId {
     TILE_REVEALED = 8,
     TILE_BLANK = 9,
     TILE_FLAG = 10,
-    TILE_BOMB_WRONG = 11,
+    TILE_MINE_WRONG = 11,
     TILE_QUESTION_REVEALED = 12,
     TILE_QUESTION = 13,
-    TILE_BOMB_REVEALED = 14,
-    TILE_BOMB_HIT = 15
+    TILE_MINE_REVEALED = 14,
+    TILE_MINE_HIT = 15
 };
