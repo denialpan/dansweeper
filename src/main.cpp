@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 
@@ -27,11 +28,16 @@ void DrawHoveredTileLabel() {
     }
 }
 
+// helper sanitize text input
+bool isValidBase64Char(char c) {
+    return (isalnum(c) || c == '+' || c == '/' || c == '=');
+}
+
 int main() {
     // resizable vsync window
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     SetConfigFlags(FLAG_VSYNC_HINT);
-    InitWindow(800, 600, "dansweeper");
+    InitWindow(500, 400, "dansweeper");
     SetTargetFPS(0);
 
     GuiLoadStyle("styles/genesis/style_genesis.rgs");
@@ -40,6 +46,7 @@ int main() {
 
     GameState state = MENU;
     Grid* currentGrid = nullptr;
+    GridMetadata metadata;
 
     render::LoadAssets();
 
@@ -56,13 +63,11 @@ int main() {
             int originX = (screenWidth - contentWidth) / 2;
             int originY = (screenHeight - contentHeight) / 2;
 
-            static int activeTab = 0;  // 0 = Manual, 1 = Seed
             static int gridWidth = 9;
             static int gridHeight = 9;
-            static int numMines = 10;
+            static int numMine = 10;
 
             static char seedText[17] = "";  // 16-char seed + null terminator
-            static bool confirmPressed = false;
 
             static bool useSeed = false;  // false = manual, true = seed
 
@@ -79,7 +84,7 @@ int main() {
             if (!useSeed) {
                 float tempGridWidth = (float)gridWidth;
                 float tempGridHeight = (float)gridHeight;
-                float tempNumMines = (float)numMines;
+                float tempNumMines = (float)numMine;
 
                 static char widthInput[8] = "9";
                 static char heightInput[8] = "9";
@@ -135,7 +140,7 @@ int main() {
                 }
 
                 // --- Width on Row 3 ---
-                GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Width", NULL, &tempGridWidth, 5.0f, 10000.0f);
+                GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Width", NULL, &tempGridWidth, 5.0f, 1000.0f);
                 if (!widthEdit) snprintf(widthInput, sizeof(widthInput), "%d", (int)tempGridWidth);
                 if (GuiTextBox({(float)originX + 185, (float)GetRowY(row), 65, 20}, widthInput, sizeof(widthInput), widthEdit))
                     widthEdit = !widthEdit;
@@ -146,7 +151,7 @@ int main() {
                 row++;
 
                 // --- Height on Row 4 ---
-                GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Height", NULL, &tempGridHeight, 5.0f, 10000.0f);
+                GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Height", NULL, &tempGridHeight, 5.0f, 1000.0f);
                 if (!heightEdit) snprintf(heightInput, sizeof(heightInput), "%d", (int)tempGridHeight);
                 if (GuiTextBox({(float)originX + 185, (float)GetRowY(row), 65, 20}, heightInput, sizeof(heightInput), heightEdit))
                     heightEdit = !heightEdit;
@@ -170,18 +175,31 @@ int main() {
                 // Apply final values
                 gridWidth = (int)(tempGridWidth + 0.5f);
                 gridHeight = (int)(tempGridHeight + 0.5f);
-                numMines = (int)(tempNumMines + 0.5f);
+                numMine = (int)(tempNumMines + 0.5f);
 
             } else {
                 GuiLabel((Rectangle){originX, originY + 80, 250, 20}, "Seed Input:");
                 GuiTextBox((Rectangle){originX, originY + 100, 250, 30}, seedText, 17, true);
+
+                // Filter out spaces manually
+                int len = strlen(seedText);
+                int writeIndex = 0;
+
+                for (int i = 0; i < len; i++) {
+                    if (isValidBase64Char(seedText[i])) {
+                        seedText[writeIndex++] = seedText[i];
+                    }
+                }
+                seedText[writeIndex] = '\0';  // Null-terminate
             }
 
             // Confirm button
             if (GuiButton((Rectangle){originX, originY + 220, 250, 30}, "Confirm")) {
-                delete currentGrid;
+                metadata.width = gridWidth;
+                metadata.height = gridHeight;
+                metadata.numMine = numMine;
 
-                currentGrid = new Grid(gridHeight, gridWidth);
+                currentGrid = new Grid(metadata, std::string(seedText), useSeed);
                 render::CenterCameraOnMap(currentGrid);
                 state = GAME;
             }
@@ -189,9 +207,8 @@ int main() {
             input::HandleInput(currentGrid);
             render::DrawBoard(currentGrid);
         }
-
+        DrawFPS(10, 10);
         DrawHoveredTileLabel();
-
         EndDrawing();
     }
 
