@@ -12,8 +12,8 @@ enum CellContent {
 };
 
 struct Cell {
-    CellContent content;
-    TileId renderTile;
+    CellContent content = CELL_EMPTY;
+    TileId renderTile = TILE_BLANK;
 };
 
 // what defines a board and its properties
@@ -28,12 +28,15 @@ class Grid {
    public:
     Grid(GridMetadata& metadata, const std::string& seed16, bool useSeed);
 
+    void generateBoard();
+
     int width;
     int height;
     int numMine;
     int prngSeed;
     std::string seed16;
     std::vector<std::vector<Cell>> cells;
+    std::string getSeed16() const;
 };
 
 std::string createBase64Seed(uint8_t width, uint8_t height, uint16_t numMine);

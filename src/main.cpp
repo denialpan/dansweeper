@@ -206,6 +206,8 @@ int main() {
         } else if (state == GAME) {
             input::HandleInput(currentGrid);
             render::DrawBoard(currentGrid);
+            SetClipboardText(currentGrid->getSeed16().c_str());
+            DrawTextEx(GetFontDefault(), currentGrid->getSeed16().c_str(), {10, 50}, 20, 1, RAYWHITE);
         }
         DrawFPS(10, 10);
         DrawHoveredTileLabel();

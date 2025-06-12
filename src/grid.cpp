@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
 // extremely messy grid seed generation handling
 
 static const char b64_table[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/";
@@ -33,6 +32,26 @@ Grid::Grid(GridMetadata& metadata, const std::string& seed16, bool useSeed) {
     }
 
     this->cells.resize(this->height, std::vector<Cell>(this->width));
+    generateBoard();
+}
+
+void Grid::generateBoard() {
+    std::mt19937 rng(static_cast<unsigned int>(prngSeed));
+    std::uniform_int_distribution<int> dist(0, width * height - 1);
+
+    std::unordered_set<int> minePositions;
+
+    while (minePositions.size() < numMine) {
+        int pos = dist(rng);
+        minePositions.insert(pos);  // avoids duplicates
+    }
+
+    for (int pos : minePositions) {
+        int y = pos / width;
+        int x = pos % width;
+        cells[y][x].content = CELL_MINE;
+        cells[y][x].renderTile = TILE_MINE_REVEALED;  // optional, if rendering mines
+    }
 }
 
 // Helper: encode raw bytes to Base64
@@ -134,4 +153,8 @@ GridMetadata decodeBase64Seed(const std::string& base64) {
     meta.prngSeed = prngSeed;
 
     return meta;
+}
+
+std::string Grid::getSeed16() const {
+    return this->seed16;
 }
