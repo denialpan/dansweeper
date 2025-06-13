@@ -67,7 +67,7 @@ int main() {
             static int gridHeight = 9;
             static int numMine = 10;
 
-            static char seedText[25] = "";  // 24-char seed + null terminator
+            static char seedText[33] = "";  // 32-char seed + null terminator
 
             static bool useSeed = false;  // false = manual, true = seed
 
@@ -179,7 +179,7 @@ int main() {
 
             } else {
                 GuiLabel((Rectangle){originX, originY + 80, 250, 20}, "Seed Input:");
-                GuiTextBox((Rectangle){originX, originY + 100, 250, 30}, seedText, 25, true);
+                GuiTextBox((Rectangle){originX, originY + 100, 250, 30}, seedText, 33, true);
 
                 // Filter out spaces manually
                 int len = strlen(seedText);
@@ -206,7 +206,7 @@ int main() {
         } else if (state == GAME) {
             input::HandleInput(currentGrid);
             render::DrawBoard(currentGrid);
-            DrawTextEx(GetFontDefault(), currentGrid->getSeed16().c_str(), {10, 50}, 20, 1, RAYWHITE);
+            DrawTextEx(GetFontDefault(), currentGrid->getSeed32().c_str(), {10, 50}, 20, 1, RAYWHITE);
         }
         DrawFPS(10, 10);
         DrawHoveredTileLabel();

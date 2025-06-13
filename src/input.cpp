@@ -84,7 +84,6 @@ void HandleInput(Grid* grid) {
             if (grid->firstClick) {
                 grid->safeX = x;
                 grid->safeY = y;
-                grid->seed32 = createBase64Seed(grid->width, grid->height, grid->numMine, grid->safeX, grid->safeY, grid->prngSeed);
                 grid->generateBoard();
                 grid->firstClick = false;
             }
@@ -92,7 +91,7 @@ void HandleInput(Grid* grid) {
             // Reveal the tile
             grid->cells[y][x].renderTile = TILE_REVEALED;
         }
-        SetClipboardText(grid->getSeed16().c_str());
+        SetClipboardText(grid->getSeed32().c_str());
     }
 
     if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
