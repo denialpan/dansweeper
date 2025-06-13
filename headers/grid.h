@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "headers/tile.h"
+#include "raylib.h"
 
 enum CellContent {
     CELL_EMPTY,
@@ -22,6 +23,8 @@ struct GridMetadata {
     int height;
     int numMine;
     int prngSeed;  // prng seed
+    int safeX;     // safe first grid coords
+    int safeY;
 };
 
 class Grid {
@@ -33,11 +36,14 @@ class Grid {
     int width;
     int height;
     int numMine;
-    int prngSeed;
-    std::string seed16;
+    uint16_t prngSeed = 0;
+    bool firstClick = false;
+    uint16_t safeX = 0;
+    uint16_t safeY = 0;
+    std::string seed32;
     std::vector<std::vector<Cell>> cells;
     std::string getSeed16() const;
 };
 
-std::string createBase64Seed(uint8_t width, uint8_t height, uint16_t numMine);
+std::string createBase64Seed(uint8_t width, uint8_t height, uint16_t numMine, uint16_t safeX, uint16_t safeY, uint64_t prngSeed);
 GridMetadata decodeBase64Seed(const std::string& seed);

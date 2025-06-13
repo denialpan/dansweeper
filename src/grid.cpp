@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <ctime>
+#include <iostream>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -20,37 +21,46 @@ Grid::Grid(GridMetadata& metadata, const std::string& seed16, bool useSeed) {
         this->width = metadata.width;
         this->height = metadata.height;
         this->numMine = metadata.numMine;
-        this->prngSeed = metadata.prngSeed;
-        this->seed16 = createBase64Seed(this->width, this->height, this->numMine);
-    } else {
-        GridMetadata metadataFromSeed = decodeBase64Seed(seed16);
-        this->width = metadataFromSeed.width;
-        this->height = metadataFromSeed.height;
-        this->numMine = metadataFromSeed.numMine;
-        this->prngSeed = metadataFromSeed.prngSeed;
-        this->seed16 = seed16;
-    }
+        this->firstClick = true;
 
-    this->cells.resize(this->height, std::vector<Cell>(this->width));
-    generateBoard();
+        std::random_device rd;
+        std::mt19937_64 gen(rd());
+        this->prngSeed = gen();
+
+        this->cells.resize(this->height, std::vector<Cell>(this->width));
+    } else {
+        GridMetadata decoded = decodeBase64Seed(seed16);
+        this->width = decoded.width;
+        this->height = decoded.height;
+        this->numMine = decoded.numMine;
+        this->prngSeed = decoded.prngSeed;
+        this->safeX = decoded.safeX;
+        this->safeY = decoded.safeY;
+        this->firstClick = false;
+        this->seed32 = seed16;
+        this->cells.resize(this->height, std::vector<Cell>(this->width));
+        generateBoard();
+    }
 }
 
 void Grid::generateBoard() {
     std::mt19937 rng(static_cast<unsigned int>(prngSeed));
     std::uniform_int_distribution<int> dist(0, width * height - 1);
 
+    int avoidPos = safeY * width + safeX;
     std::unordered_set<int> minePositions;
 
     while (minePositions.size() < numMine) {
         int pos = dist(rng);
-        minePositions.insert(pos);  // avoids duplicates
+        if (pos == avoidPos) continue;  // skip first click cell
+        minePositions.insert(pos);
     }
 
     for (int pos : minePositions) {
         int y = pos / width;
         int x = pos % width;
         cells[y][x].content = CELL_MINE;
-        cells[y][x].renderTile = TILE_MINE_REVEALED;  // optional, if rendering mines
+        cells[y][x].renderTile = TILE_MINE_REVEALED;
     }
 }
 
@@ -103,58 +113,54 @@ std::vector<uint8_t> decodeBase64Bytes(const std::string& encoded) {
     return out;
 }
 
-// Main method: creates base64 seed with packed width/height/mines/prng
-std::string createBase64Seed(uint8_t width, uint8_t height, uint16_t numMine) {
+// Main method: creates base64 seed with packed width/height/mines/prng/safeXY
+std::string createBase64Seed(uint8_t width, uint8_t height, uint16_t numMines,
+                             uint16_t safeX, uint16_t safeY, uint64_t prngSeed) {
     std::vector<uint8_t> bytes;
 
-    // Pack dimensions and mines
     bytes.push_back(width);
     bytes.push_back(height);
-    bytes.push_back((numMine >> 8) & 0xFF);
-    bytes.push_back(numMine & 0xFF);
-
-    // Generate 64-bit random PRNG seed
-    std::random_device rd;
-    std::mt19937_64 gen(rd());
-    uint64_t prngSeed = gen();
+    bytes.push_back((numMines >> 8) & 0xFF);
+    bytes.push_back(numMines & 0xFF);
 
     for (int i = 7; i >= 0; --i)
         bytes.push_back((prngSeed >> (i * 8)) & 0xFF);
 
+    bytes.push_back((safeX >> 8) & 0xFF);
+    bytes.push_back(safeX & 0xFF);
+    bytes.push_back((safeY >> 8) & 0xFF);
+    bytes.push_back(safeY & 0xFF);
+
     return encodeBase64(bytes);
-};
+}
 
 GridMetadata decodeBase64Seed(const std::string& base64) {
     auto bytes = decodeBase64Bytes(base64);
-    if (bytes.size() != 12)
-        throw std::runtime_error("Invalid Base64 seed length: expected 12 bytes after decoding.");
+    if (bytes.size() != 16)
+        throw std::runtime_error("Invalid Base64 seed length: expected 16 bytes after decoding.");
 
-    uint16_t rawWidth = bytes[0];
-    uint16_t rawHeight = bytes[1];
-    uint16_t rawMines = (static_cast<uint16_t>(bytes[2]) << 8) | bytes[3];
+    uint16_t width = bytes[0];
+    uint16_t height = bytes[1];
+    uint16_t numMines = (bytes[2] << 8) | bytes[3];
 
-    // Clamp width/height
-    uint16_t width = std::min(rawWidth, static_cast<uint16_t>(1000));
-    uint16_t height = std::min(rawHeight, static_cast<uint16_t>(1000));
-
-    // Clamp mines to at most width * height - 1
-    uint32_t maxMines = std::max(1, width * height - 1);  // ensure at least 1 cell is safe
-    uint16_t numMines = std::min(rawMines, static_cast<uint16_t>(maxMines));
-
-    // Decode PRNG seed
     uint64_t prngSeed = 0;
     for (int i = 4; i < 12; ++i)
         prngSeed = (prngSeed << 8) | bytes[i];
 
+    uint16_t safeX = (bytes[12] << 8) | bytes[13];
+    uint16_t safeY = (bytes[14] << 8) | bytes[15];
+
     GridMetadata meta;
-    meta.width = static_cast<uint8_t>(width);
-    meta.height = static_cast<uint8_t>(height);
-    meta.numMine = numMines;
+    meta.width = static_cast<uint8_t>(std::min<uint16_t>(width, 1000));
+    meta.height = static_cast<uint8_t>(std::min<uint16_t>(height, 1000));
+    meta.numMine = std::min(numMines, static_cast<uint16_t>(meta.width * meta.height - 1));
     meta.prngSeed = prngSeed;
+    meta.safeX = safeX;
+    meta.safeY = safeY;
 
     return meta;
 }
 
 std::string Grid::getSeed16() const {
-    return this->seed16;
+    return this->seed32;
 }

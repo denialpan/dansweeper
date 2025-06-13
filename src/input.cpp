@@ -80,11 +80,19 @@ void HandleInput(Grid* grid) {
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         if (x >= 0 && x < grid->width &&
             y >= 0 && y < grid->height) {
+            // first click implementation
+            if (grid->firstClick) {
+                grid->safeX = x;
+                grid->safeY = y;
+                grid->seed32 = createBase64Seed(grid->width, grid->height, grid->numMine, grid->safeX, grid->safeY, grid->prngSeed);
+                grid->generateBoard();
+                grid->firstClick = false;
+            }
+
             // Reveal the tile
             grid->cells[y][x].renderTile = TILE_REVEALED;
-
-            std::cout << grid->cells[y][x].renderTile;
         }
+        SetClipboardText(grid->getSeed16().c_str());
     }
 
     if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
