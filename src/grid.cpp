@@ -29,18 +29,52 @@ Grid::Grid(GridMetadata& metadata, const std::string& seed32, bool useSeed) {
 
         this->cells.resize(this->height, std::vector<Cell>(this->width));
 
-        std::string reconstructedSeed = createSeedFromManualInput(this->width, this->height, this->numMine, 7, 7);
-        this->seed32 = reconstructedSeed;
-        std::cout << "break";
-
     } else {
         GridMetadata decodedMetadata = decodeSeed(seed32);
+        this->width = decodedMetadata.width;
+        this->height = decodedMetadata.height;
+        this->numMine = decodedMetadata.numMine;
+        this->prngSeed = decodedMetadata.prngSeed;
+        this->safeX = decodedMetadata.safeX;
+        this->safeY = decodedMetadata.safeY;
+        this->seed32 = seed32;
+
+        this->cells.resize(this->height, std::vector<Cell>(this->width));
+        Grid::generateBoard();
+
         std::cout << "break";
     }
 }
 
 void Grid::generateBoard() {
-    // implement
+    // Reset all cells
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            cells[y][x].content = CELL_EMPTY;
+            cells[y][x].renderTile = TILE_BLANK;
+        }
+    }
+
+    // Generate list of all possible cell indices excluding the safe cell
+    std::vector<std::pair<int, int>> validCells;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            if (x == safeX && y == safeY) continue;
+            validCells.emplace_back(x, y);
+        }
+    }
+
+    // Shuffle valid cells using the deterministic prngSeed
+    std::mt19937_64 gen(prngSeed);
+    std::shuffle(validCells.begin(), validCells.end(), gen);
+
+    // Place mines in the first `numMine` shuffled cells
+    for (int i = 0; i < numMine && i < static_cast<int>(validCells.size()); ++i) {
+        int x = validCells[i].first;
+        int y = validCells[i].second;
+        cells[y][x].content = CELL_MINE;
+        cells[y][x].renderTile = TILE_MINE_REVEALED;
+    }
 }
 
 GridMetadata decodeSeed(const std::string& seed) {
@@ -123,7 +157,7 @@ std::vector<uint8_t> decodeBase64Bytes(const std::string& encoded) {
     return out;
 };
 
-std::string createSeedFromManualInput(uint16_t width, uint16_t height, uint32_t numMines, uint16_t safeX, uint16_t safeY) {
+std::string Grid::createSeedFromManualInput(uint16_t width, uint16_t height, uint32_t numMines, uint16_t safeX, uint16_t safeY) {
     auto now = std::chrono::high_resolution_clock::now();
     auto timeNs = now.time_since_epoch().count();
 
@@ -139,6 +173,7 @@ std::string createSeedFromManualInput(uint16_t width, uint16_t height, uint32_t 
 
     std::hash<std::string> hasher;
     uint64_t prngSeed = hasher(fullKey);
+    this->prngSeed = prngSeed;
 
     return createBase64Seed(width, height, numMines, safeX, safeY, prngSeed);
 }

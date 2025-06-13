@@ -84,6 +84,7 @@ void HandleInput(Grid* grid) {
             if (grid->firstClick) {
                 grid->safeX = x;
                 grid->safeY = y;
+                grid->seed32 = grid->createSeedFromManualInput(grid->width, grid->height, grid->numMine, x, y);
                 grid->generateBoard();
                 grid->firstClick = false;
             }
