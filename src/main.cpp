@@ -11,7 +11,7 @@
 
 using namespace std;
 
-enum GameState {
+enum WindowState {
     MENU,
     GAME,
 };
@@ -44,7 +44,7 @@ int main() {
     Font customFont = LoadFontEx("resources/ProggyClean.ttf", 13, 0, 250);
     SetTextureFilter(customFont.texture, TEXTURE_FILTER_POINT);
 
-    GameState state = MENU;
+    WindowState state = MENU;
     Grid* currentGrid = nullptr;
     GridMetadata metadata;
 

@@ -80,7 +80,17 @@ void Grid::generateBoard() {
 void Grid::reveal(int startX, int startY) {
     // BFS implementation to floodfill
     // this is separate from determining next tile to click
-    if (startX < 0 || startX >= width || startY < 0 || startY >= height) return;
+
+    // out of bounds somehow
+    if (startX < 0 || startX >= width || startY < 0 || startY >= height) {
+        return;
+    }
+
+    // clicked on mine
+    if (cells[startY][startX].content == CELL_MINE) {
+        gameState = GameState::LOST;
+        return;
+    };
 
     std::queue<std::pair<int, int>> toReveal;
     toReveal.push({startX, startY});
@@ -111,6 +121,10 @@ void Grid::reveal(int startX, int startY) {
             cell.renderTile = static_cast<TileId>(TILE_1 + (count - 1));
         }
     }
+
+    if (checkWinCondition()) {
+        gameState = GameState::WON;
+    }
 }
 
 int Grid::countAdjacentMines(int x, int y) {
@@ -126,6 +140,19 @@ int Grid::countAdjacentMines(int x, int y) {
         }
     }
     return count;
+}
+
+bool Grid::checkWinCondition() {
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            const Cell& cell = cells[y][x];
+            if (cell.content == CELL_EMPTY &&
+                (cell.renderTile == TILE_BLANK || cell.renderTile == TILE_FLAG || cell.renderTile == TILE_QUESTION)) {
+                return false;  // still unrevealed non-mine cell
+            }
+        }
+    }
+    return true;
 }
 
 std::string Grid::getSeed32() const {

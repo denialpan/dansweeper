@@ -81,6 +81,13 @@ void DrawBoard(const Grid* grid) {
     //     DrawRectangleLinesEx(tileRect, 1, ORANGE);
     // }
 
+    // test gamestate detection
+    if (grid->gameState == GameState::WON) {
+        DrawText("You Win!", 100, 100, 30, GREEN);
+    } else if (grid->gameState == GameState::LOST) {
+        DrawText("Game Over!", 100, 100, 30, RED);
+    }
+
     EndMode2D();
 }
 

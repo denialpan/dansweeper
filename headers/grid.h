@@ -12,6 +12,12 @@ enum CellContent {
     CELL_MINE
 };
 
+enum class GameState {
+    ONGOING,
+    WON,
+    LOST
+};
+
 struct Cell {
     CellContent content = CELL_EMPTY;
     TileId renderTile = TILE_BLANK;
@@ -32,10 +38,12 @@ struct GridMetadata {
 class Grid {
    public:
     Grid(GridMetadata& metadata, const std::string& seed32, bool useSeed);
+    GameState gameState = GameState::ONGOING;
 
     void generateBoard();
     void reveal(int x, int y);
     int countAdjacentMines(int x, int y);
+    bool checkWinCondition();
 
     int width;
     int height;
