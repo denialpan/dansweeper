@@ -5,7 +5,7 @@
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
 #include "headers/grid.h"
-#include "headers/input.h"
+#include "headers/inputcontroller.h"
 #include "headers/raygui.h"
 #include "headers/render.h"
 
@@ -16,17 +16,17 @@ enum GameState {
     GAME,
 };
 
-void DrawHoveredTileLabel() {
-    input::HoveredTile hvt = input::GetHoveredTile();
+// void DrawHoveredTileLabel() {
+//     inputController::HoveredTile hvt = inputController::GetHoveredTile();
 
-    if (hvt.valid) {
-        char buffer[32];
-        snprintf(buffer, sizeof(buffer), "(%d, %d)", hvt.x, hvt.y);
+//     if (hvt.valid) {
+//         char buffer[32];
+//         snprintf(buffer, sizeof(buffer), "(%d, %d)", hvt.x, hvt.y);
 
-        Vector2 textPos = {10, 10};  // Adjust as needed
-        DrawTextEx(GetFontDefault(), buffer, textPos, 20, 1, RAYWHITE);
-    }
-}
+//         Vector2 textPos = {10, 10};  // Adjust as needed
+//         DrawTextEx(GetFontDefault(), buffer, textPos, 20, 1, RAYWHITE);
+//     }
+// }
 
 // helper sanitize text input
 bool isValidBase64Char(char c) {
@@ -204,12 +204,13 @@ int main() {
                 state = GAME;
             }
         } else if (state == GAME) {
-            input::HandleInput(currentGrid);
+            InputController* manualSolve = new InputController(currentGrid);
             render::DrawBoard(currentGrid);
+            manualSolve->handleManualInput();
             DrawTextEx(GetFontDefault(), currentGrid->getSeed32().c_str(), {10, 50}, 20, 1, RAYWHITE);
         }
         DrawFPS(10, 10);
-        DrawHoveredTileLabel();
+        // DrawHoveredTileLabel();
         EndDrawing();
     }
 

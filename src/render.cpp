@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "headers/grid.h"
-#include "headers/input.h"
+#include "headers/inputcontroller.h"
 #include "raylib.h"
 #include "raymath.h"
 

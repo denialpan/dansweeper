@@ -68,6 +68,7 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "chrono": "cpp",
-        "ratio": "cpp"
+        "ratio": "cpp",
+        "map": "cpp"
     }
 }

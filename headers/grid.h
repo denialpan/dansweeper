@@ -15,6 +15,8 @@ enum CellContent {
 struct Cell {
     CellContent content = CELL_EMPTY;
     TileId renderTile = TILE_BLANK;
+    bool revealed = false;
+    bool flagged = false;
 };
 
 // what defines a board and its properties
@@ -32,7 +34,8 @@ class Grid {
     Grid(GridMetadata& metadata, const std::string& seed32, bool useSeed);
 
     void generateBoard();
-    std::string createSeedFromManualInput(uint16_t width, uint16_t height, uint32_t numMines, uint16_t safeX, uint16_t safeY);
+    void reveal(int x, int y);
+    int countAdjacentMines(int x, int y);
 
     int width;
     int height;
@@ -45,9 +48,3 @@ class Grid {
     std::vector<std::vector<Cell>> cells;
     std::string getSeed32() const;
 };
-
-GridMetadata decodeSeed(const std::string& seed);
-std::vector<uint8_t> decodeBase64Bytes(const std::string& encoded);
-std::string encodeBase64(const std::vector<uint8_t>& data);
-std::string createBase64Seed(uint16_t width, uint16_t height, uint32_t numMines, uint16_t safeX, uint16_t safeY, uint64_t prngSeed);
-uint64_t hashBoardParamsWithSalt(uint16_t width, uint16_t height, uint32_t numMines, uint16_t safeX, uint16_t safeY, const std::string& salt);
