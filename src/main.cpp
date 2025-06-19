@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <format>
 #include <iomanip>
 #include <iostream>
 
@@ -12,11 +13,26 @@
 using namespace std;
 
 enum class WindowState {
-    MENU,
-    GAME,
-    PAUSE,
-    SETTINGS,
+    MENU = 0,
+    GAME = 1,
+    PAUSE = 2,
+    SETTINGS = 3,
 };
+
+const char* WindowStateToString(WindowState state) {
+    switch (state) {
+        case WindowState::MENU:
+            return "MENU";
+        case WindowState::GAME:
+            return "GAME";
+        case WindowState::PAUSE:
+            return "PAUSE";
+        case WindowState::SETTINGS:
+            return "SETTINGS";
+        default:
+            return "UNKNOWN";
+    }
+}
 
 // void DrawHoveredTileLabel() {
 //     inputController::HoveredTile hvt = inputController::GetHoveredTile();
@@ -36,6 +52,21 @@ bool isValidBase64Char(char c) {
 }
 
 int main() {
+    if (__cplusplus == 202302L)
+        std::cout << "C++23";
+    else if (__cplusplus == 202002L)
+        std::cout << "C++20";
+    else if (__cplusplus == 201703L)
+        std::cout << "C++17";
+    else if (__cplusplus == 201402L)
+        std::cout << "C++14";
+    else if (__cplusplus == 201103L)
+        std::cout << "C++11";
+    else if (__cplusplus == 199711L)
+        std::cout << "C++98";
+    else
+        std::cout << "pre-standard C++." << __cplusplus;
+    std::cout << "\n";
     // resizable vsync window
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     SetConfigFlags(FLAG_VSYNC_HINT);
@@ -57,6 +88,8 @@ int main() {
     static int gridWidth = 9;
     static int gridHeight = 9;
     static int numMine = 10;
+
+    static bool debug = false;
 
     while (!WindowShouldClose()) {
         BeginDrawing();
@@ -239,10 +272,24 @@ int main() {
             if (IsKeyPressed(KEY_ESCAPE)) {
                 windowState = (windowState == WindowState::PAUSE) ? WindowState::GAME : WindowState::PAUSE;
             }
-        }
+        };
 
-        DrawFPS(10, 10);
-        // DrawHoveredTileLabel();
+        if (IsKeyPressed(KEY_F3)) {
+            debug = (debug == false) ? true : false;
+        };
+
+        if (debug) {
+            int fps = GetFPS();
+            std::string fpsText = std::to_string(fps) + " FPS";
+            DrawTextEx(customFont, fpsText.c_str(), {10, 10}, 13, 1, WHITE);
+            DrawTextEx(customFont, std::format("window state: {}", std::string(WindowStateToString(windowState))).c_str(), {10, 20}, 13, 1, WHITE);
+
+            if (currentGrid) {
+                DrawTextEx(customFont, "grid: exists", {10, 30}, 13, 1, WHITE);
+            } else {
+                DrawTextEx(customFont, std::format("grid: {}", NULL).c_str(), {10, 30}, 13, 1, WHITE);
+            }
+        }
         EndDrawing();
     }
 
