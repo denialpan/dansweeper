@@ -53,6 +53,11 @@ int main() {
 
     render::LoadAssets();
 
+    // initial menu settings
+    static int gridWidth = 9;
+    static int gridHeight = 9;
+    static int numMine = 10;
+
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BLACK);
@@ -65,10 +70,6 @@ int main() {
 
             int originX = (screenWidth - contentWidth) / 2;
             int originY = (screenHeight - contentHeight) / 2;
-
-            static int gridWidth = 9;
-            static int gridHeight = 9;
-            static int numMine = 10;
 
             static char seedText[33] = "";  // 32-char seed + null terminator
 
