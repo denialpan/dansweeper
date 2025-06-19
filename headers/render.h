@@ -17,6 +17,8 @@ void CenterCameraOnMap(const Grid* grid);
 // Expose tilemap bounds
 int GetMapPixelWidth();
 int GetMapPixelHeight();
+
+void DrawScreenBorderFromTileset(Texture2D borderTexture, int sliceSize);
 }  // namespace render
 
 #endif  // RENDER_H

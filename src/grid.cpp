@@ -127,6 +127,13 @@ void Grid::reveal(int startX, int startY) {
     }
 }
 
+void Grid::flag(int x, int y) {
+    if (cells[y][x].revealed == false) {
+        cells[y][x].flagged = (cells[y][x].flagged == true) ? false : true;
+        cells[y][x].renderTile = (cells[y][x].flagged == true) ? TILE_FLAG : TILE_BLANK;
+    }
+}
+
 int Grid::countAdjacentMines(int x, int y) {
     int count = 0;
     for (int dy = -1; dy <= 1; ++dy) {

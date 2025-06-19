@@ -42,6 +42,7 @@ class Grid {
 
     void generateBoard();
     void reveal(int x, int y);
+    void flag(int x, int y);
     int countAdjacentMines(int x, int y);
     bool checkWinCondition();
 

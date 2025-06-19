@@ -11,9 +11,11 @@
 
 using namespace std;
 
-enum WindowState {
+enum class WindowState {
     MENU,
     GAME,
+    PAUSE,
+    SETTINGS,
 };
 
 // void DrawHoveredTileLabel() {
@@ -38,13 +40,14 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     SetConfigFlags(FLAG_VSYNC_HINT);
     InitWindow(500, 400, "dansweeper");
+    SetExitKey(KEY_NULL);
     SetTargetFPS(0);
 
     GuiLoadStyle("styles/genesis/style_genesis.rgs");
     Font customFont = LoadFontEx("resources/ProggyClean.ttf", 13, 0, 250);
     SetTextureFilter(customFont.texture, TEXTURE_FILTER_POINT);
 
-    WindowState state = MENU;
+    WindowState windowState = WindowState::MENU;
     Grid* currentGrid = nullptr;
     GridMetadata metadata;
 
@@ -54,7 +57,7 @@ int main() {
         BeginDrawing();
         ClearBackground(BLACK);
 
-        if (state == MENU) {
+        if (windowState == WindowState::MENU) {
             int contentWidth = 250;
             int contentHeight = 290;  // Adjust based on number of elements
             int screenWidth = GetScreenWidth();
@@ -201,14 +204,42 @@ int main() {
 
                 currentGrid = new Grid(metadata, std::string(seedText), useSeed);
                 render::CenterCameraOnMap(currentGrid);
-                state = GAME;
+                windowState = WindowState::GAME;
             }
-        } else if (state == GAME) {
-            InputController* manualSolve = new InputController(currentGrid);
-            render::DrawBoard(currentGrid);
-            manualSolve->handleManualInput();
-            DrawTextEx(GetFontDefault(), currentGrid->getSeed32().c_str(), {10, 50}, 20, 1, RAYWHITE);
+        } else if (windowState == WindowState::GAME || windowState == WindowState::PAUSE) {
+            if (windowState != WindowState::PAUSE) {
+                InputController* manualSolve = new InputController(currentGrid);
+                render::DrawBoard(currentGrid);
+                manualSolve->handleManualInput();
+                DrawTextEx(GetFontDefault(), currentGrid->getSeed32().c_str(), {10, 50}, 20, 1, RAYWHITE);
+            } else {
+                const int screenWidth = GetScreenWidth();
+                const int screenHeight = GetScreenHeight();
+
+                Rectangle panel = {screenWidth / 2 - 100, screenHeight / 2 - 100, 200, 220};
+
+                DrawRectangleRec(panel, DARKGRAY);
+                DrawRectangleLinesEx(panel, 2, LIGHTGRAY);
+                DrawText("Paused", panel.x + 60, panel.y + 20, 20, RAYWHITE);
+
+                if (GuiButton({panel.x + 30, panel.y + 60, 140, 30}, "Resume")) {
+                    windowState = WindowState::GAME;
+                }
+
+                // if (GuiButton({panel.x + 30, panel.y + 100, 140, 30}, "Settings")) {
+                //     windowState = WindowState::SETTINGS;
+                // }
+
+                if (GuiButton({panel.x + 30, panel.y + 140, 140, 30}, "Quit to Menu")) {
+                    windowState = WindowState::MENU;
+                }
+            }
+
+            if (IsKeyPressed(KEY_ESCAPE)) {
+                windowState = (windowState == WindowState::PAUSE) ? WindowState::GAME : WindowState::PAUSE;
+            }
         }
+
         DrawFPS(10, 10);
         // DrawHoveredTileLabel();
         EndDrawing();

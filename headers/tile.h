@@ -20,3 +20,17 @@ enum TileId {
     TILE_MINE_REVEALED = 14,
     TILE_MINE_HIT = 15
 };
+
+enum BorderTileId {
+    BORDER_TL = 0,  // (0, 0)
+    BORDER_T = 1,   // (1, 0)
+    BORDER_TR = 2,  // (2, 0)
+
+    BORDER_L = 4,  // (0, 1)
+    BORDER_C = 5,  // (1, 1) optional fill
+    BORDER_R = 6,  // (2, 1)
+
+    BORDER_BL = 8,  // (0, 2)
+    BORDER_B = 9,   // (1, 2)
+    BORDER_BR = 10  // (2, 2)
+};

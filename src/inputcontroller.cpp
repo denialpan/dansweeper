@@ -33,6 +33,11 @@ void InputController::handleManualInput() {
 };
 
 void InputController::handleLeftClick() {
+    // game already over
+    if (grid->gameState == GameState::WON || grid->gameState == GameState::LOST) {
+        return;
+    }
+
     // first click implementation
     if (grid->firstClick) {
         grid->safeX = this->gc.x;
@@ -46,7 +51,11 @@ void InputController::handleLeftClick() {
 };
 
 void InputController::handleRightClick() {
+    if (grid->gameState == GameState::WON || grid->gameState == GameState::LOST) {
+        return;
+    }
 
+    grid->flag(this->gc.x, this->gc.y);
 };
 
 void InputController::handlePanning(Camera2D& camera) {
@@ -84,10 +93,10 @@ void InputController::clampCameraTarget(Camera2D& camera) {
     int mapWidth = render::GetMapPixelWidth();
     int mapHeight = render::GetMapPixelHeight();
 
-    float minX = halfScreenWidth;
-    float maxX = mapWidth - halfScreenWidth;
-    float minY = halfScreenHeight;
-    float maxY = mapHeight - halfScreenHeight;
+    float minX = halfScreenWidth - 16;
+    float maxX = mapWidth - halfScreenWidth + 16;
+    float minY = halfScreenHeight - 16;
+    float maxY = mapHeight - halfScreenHeight + 16;
 
     if (mapWidth * camera.zoom <= GetScreenWidth()) {
         camera.target.x = mapWidth / 2.0f;
