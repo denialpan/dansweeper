@@ -23,6 +23,7 @@ struct Cell {
     TileId renderTile = TILE_BLANK;
     bool revealed = false;
     bool flagged = false;
+    int adjacentMines = 0;
 };
 
 // what defines a board and its properties
@@ -42,6 +43,7 @@ class Grid {
 
     void generateBoard();
     void reveal(int x, int y);
+    void chord(int x, int y);
     void flag(int x, int y);
     int countAdjacentMines(int x, int y);
     bool checkWinCondition();

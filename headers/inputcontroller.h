@@ -30,6 +30,7 @@ class InputController {
 
     void handleLeftClick();
     void handleRightClick();
+    void handleMiddleClick();
 };
 
 #endif  // INPUT_H

@@ -5,6 +5,7 @@
 
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
+#include "headers/globals.h"
 #include "headers/grid.h"
 #include "headers/inputcontroller.h"
 #include "headers/raygui.h"
@@ -12,12 +13,7 @@
 
 using namespace std;
 
-enum class WindowState {
-    MENU = 0,
-    GAME = 1,
-    PAUSE = 2,
-    SETTINGS = 3,
-};
+WindowState windowState = WindowState::MENU;
 
 const char* WindowStateToString(WindowState state) {
     switch (state) {
@@ -52,25 +48,11 @@ bool isValidBase64Char(char c) {
 }
 
 int main() {
-    if (__cplusplus == 202302L)
-        std::cout << "C++23";
-    else if (__cplusplus == 202002L)
-        std::cout << "C++20";
-    else if (__cplusplus == 201703L)
-        std::cout << "C++17";
-    else if (__cplusplus == 201402L)
-        std::cout << "C++14";
-    else if (__cplusplus == 201103L)
-        std::cout << "C++11";
-    else if (__cplusplus == 199711L)
-        std::cout << "C++98";
-    else
-        std::cout << "pre-standard C++." << __cplusplus;
-    std::cout << "\n";
     // resizable vsync window
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     SetConfigFlags(FLAG_VSYNC_HINT);
     InitWindow(500, 400, "dansweeper");
+    SetWindowMinSize(500, 400);
     SetExitKey(KEY_NULL);
     SetTargetFPS(0);
 
@@ -78,7 +60,6 @@ int main() {
     Font customFont = LoadFontEx("resources/ProggyClean.ttf", 13, 0, 250);
     SetTextureFilter(customFont.texture, TEXTURE_FILTER_POINT);
 
-    WindowState windowState = WindowState::MENU;
     Grid* currentGrid = nullptr;
     GridMetadata metadata;
 
@@ -275,19 +256,19 @@ int main() {
         };
 
         if (IsKeyPressed(KEY_F3)) {
-            debug = (debug == false) ? true : false;
+            debug = (debug) ? false : true;
         };
 
         if (debug) {
             int fps = GetFPS();
             std::string fpsText = std::to_string(fps) + " FPS";
             DrawTextEx(customFont, fpsText.c_str(), {10, 10}, 13, 1, WHITE);
-            DrawTextEx(customFont, std::format("window state: {}", std::string(WindowStateToString(windowState))).c_str(), {10, 20}, 13, 1, WHITE);
+            DrawTextEx(customFont, std::format("window state: {}", std::string(WindowStateToString(windowState))).c_str(), {10, 25}, 13, 1, WHITE);
 
             if (currentGrid) {
-                DrawTextEx(customFont, "grid: exists", {10, 30}, 13, 1, WHITE);
+                DrawTextEx(customFont, "grid: exists", {10, 40}, 13, 1, WHITE);
             } else {
-                DrawTextEx(customFont, std::format("grid: {}", NULL).c_str(), {10, 30}, 13, 1, WHITE);
+                DrawTextEx(customFont, std::format("grid: {}", NULL).c_str(), {10, 40}, 13, 1, WHITE);
             }
         }
         EndDrawing();

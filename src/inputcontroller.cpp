@@ -9,7 +9,7 @@
 #include "raymath.h"
 
 const float zoomIncrementSpeed = 0.1f;
-static float targetZoom = 0.5f;
+static float targetZoom = 2.0f;
 InputController::InputController(Grid* grid) {
     this->grid = grid;
 }
@@ -29,6 +29,8 @@ void InputController::handleManualInput() {
         handleLeftClick();
     } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
         handleRightClick();
+    } else if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) {
+        handleMiddleClick();
     }
 };
 
@@ -57,6 +59,13 @@ void InputController::handleRightClick() {
 
     grid->flag(this->gc.x, this->gc.y);
 };
+
+void InputController::handleMiddleClick() {
+    if (grid->gameState == GameState::WON || grid->gameState == GameState::LOST) {
+        return;
+    }
+    grid->chord(this->gc.x, this->gc.y);
+}
 
 void InputController::handlePanning(Camera2D& camera) {
     if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON)) {
@@ -93,10 +102,10 @@ void InputController::clampCameraTarget(Camera2D& camera) {
     int mapWidth = render::GetMapPixelWidth();
     int mapHeight = render::GetMapPixelHeight();
 
-    float minX = halfScreenWidth - 16;
-    float maxX = mapWidth - halfScreenWidth + 16;
-    float minY = halfScreenHeight - 16;
-    float maxY = mapHeight - halfScreenHeight + 16;
+    float minX = halfScreenWidth;
+    float maxX = mapWidth - halfScreenWidth;
+    float minY = halfScreenHeight;
+    float maxY = mapHeight - halfScreenHeight;
 
     if (mapWidth * camera.zoom <= GetScreenWidth()) {
         camera.target.x = mapWidth / 2.0f;

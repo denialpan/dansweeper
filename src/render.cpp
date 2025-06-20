@@ -2,8 +2,10 @@
 
 #include <iostream>
 
+#include "headers/globals.h"
 #include "headers/grid.h"
 #include "headers/inputcontroller.h"
+#include "headers/raygui.h"
 #include "raylib.h"
 #include "raymath.h"
 
@@ -16,6 +18,9 @@ static Texture2D textureTileset;
 static Texture2D borderTileset;
 static Camera2D camera;
 static const Grid* activeGrid = nullptr;
+
+bool showEndscreen = false;
+GameState previousState = GameState::ONGOING;
 
 void LoadAssets() {
     Image texturemap = LoadImage("resources/texturemap.png");
@@ -85,66 +90,40 @@ void DrawBoard(const Grid* grid) {
     //     DrawRectangleLinesEx(tileRect, 1, ORANGE);
     // }
 
-    // test gamestate detection
-    if (grid->gameState == GameState::WON) {
-        DrawText("You Win!", 100, 100, 30, GREEN);
-    } else if (grid->gameState == GameState::LOST) {
-        DrawText("Game Over!", 100, 100, 30, RED);
-    }
-
     EndMode2D();
 
-    DrawScreenBorderFromTileset(borderTileset, TILE_TEXTURE_PIXEL_SIZE);
-}
+    if ((grid->gameState == GameState::WON || grid->gameState == GameState::LOST) &&
+        previousState == GameState::ONGOING) {
+        showEndscreen = true;
+    }
 
-void DrawScreenBorderFromTileset(Texture2D borderTexture, int sliceSize) {
-    int screenW = GetScreenWidth();
-    int screenH = GetScreenHeight();
+    previousState = grid->gameState;
 
-    int borderThickness = 32;
+    if (showEndscreen) {
+        int screenWidth = GetScreenWidth();
+        int screenHeight = GetScreenHeight();
 
-    // Source slices (assume 96x96 texture with 32x32 pieces)
-    Rectangle srcTL = {0, 0, sliceSize, sliceSize};
-    Rectangle srcT = {sliceSize, 0, sliceSize, sliceSize};
-    Rectangle srcTR = {sliceSize * 2, 0, sliceSize, sliceSize};
+        // Popup size and position
+        int boxWidth = 300;
+        int boxHeight = 180;
+        int boxX = (screenWidth - boxWidth) / 2;
+        int boxY = (screenHeight - boxHeight) / 2;
+        Rectangle windowBounds = {(float)boxX, (float)boxY, (float)boxWidth, (float)boxHeight};
 
-    Rectangle srcL = {0, sliceSize, sliceSize, sliceSize};
-    Rectangle srcC = {sliceSize, sliceSize, sliceSize, sliceSize};  // optional
-    Rectangle srcR = {sliceSize * 2, sliceSize, sliceSize, sliceSize};
+        // Handle [X] button — returns true if clicked
+        const char* title = grid->gameState == GameState::WON ? "You Win!" : "Game Over!";
+        if (GuiWindowBox(windowBounds, title)) {
+            showEndscreen = false;  // [X] button closes the popup
+            return;
+        }
 
-    Rectangle srcBL = {0, sliceSize * 2, sliceSize, sliceSize};
-    Rectangle srcB = {sliceSize, sliceSize * 2, sliceSize, sliceSize};
-    Rectangle srcBR = {sliceSize * 2, sliceSize * 2, sliceSize, sliceSize};
-
-    // Destination positions (corners)
-    Vector2 posTL = {0, 0};
-    Vector2 posTR = {(float)(screenW - sliceSize), 0};
-    Vector2 posBL = {0, (float)(screenH - sliceSize)};
-    Vector2 posBR = {(float)(screenW - sliceSize), (float)(screenH - sliceSize)};
-
-    // Stretchable edges
-    Rectangle dstT = {sliceSize, 0, (float)(screenW - 2 * sliceSize), sliceSize};
-    Rectangle dstB = {sliceSize, (float)(screenH - sliceSize), (float)(screenW - 2 * sliceSize), sliceSize};
-    Rectangle dstL = {0, sliceSize, sliceSize, (float)(screenH - 2 * sliceSize)};
-    Rectangle dstR = {(float)(screenW - sliceSize), sliceSize, sliceSize, (float)(screenH - 2 * sliceSize)};
-
-    // Optional: fill center
-    Rectangle dstC = {sliceSize, sliceSize, (float)(screenW - 2 * sliceSize), (float)(screenH - 2 * sliceSize)};
-
-    // Draw corners
-    DrawTexturePro(borderTexture, srcTL, {posTL.x, posTL.y, (float)sliceSize, (float)sliceSize}, {0, 0}, 0, WHITE);
-    DrawTexturePro(borderTexture, srcTR, {posTR.x, posTR.y, (float)sliceSize, (float)sliceSize}, {0, 0}, 0, WHITE);
-    DrawTexturePro(borderTexture, srcBL, {posBL.x, posBL.y, (float)sliceSize, (float)sliceSize}, {0, 0}, 0, WHITE);
-    DrawTexturePro(borderTexture, srcBR, {posBR.x, posBR.y, (float)sliceSize, (float)sliceSize}, {0, 0}, 0, WHITE);
-
-    // Draw edges
-    DrawTexturePro(borderTexture, srcT, dstT, {0, 0}, 0, WHITE);
-    DrawTexturePro(borderTexture, srcB, dstB, {0, 0}, 0, WHITE);
-    DrawTexturePro(borderTexture, srcL, dstL, {0, 0}, 0, WHITE);
-    DrawTexturePro(borderTexture, srcR, dstR, {0, 0}, 0, WHITE);
-
-    // Optional: draw center fill (use if center is textured, else skip)
-    // DrawTexturePro(borderTexture, srcC, dstC, {0, 0}, 0, WHITE);
+        // Menu button (centered below the title)
+        Rectangle quitBtn = {boxX + 100, boxY + 110, 100, 30};
+        if (GuiButton(quitBtn, "Menu")) {
+            windowState = WindowState::MENU;  // Go back to menu
+            showEndscreen = false;
+        }
+    }
 }
 
 Camera2D& GetCamera() {
