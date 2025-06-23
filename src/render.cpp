@@ -11,16 +11,13 @@
 
 namespace render {
 
-constexpr int TILE_TEXTURE_PIXEL_SIZE = 16;
-constexpr int TILESET_COLS = 4;
-
 static Texture2D textureTileset;
 static Texture2D borderTileset;
 static Camera2D camera;
 static const Grid* activeGrid = nullptr;
 
 bool showEndscreen = false;
-GameState previousState = GameState::ONGOING;
+GameState previousWindowState = GameState::ONGOING;
 
 void LoadAssets() {
     Image texturemap = LoadImage("resources/texturemap.png");
@@ -77,27 +74,14 @@ void DrawBoard(const Grid* grid) {
         }
     };
 
-    // debug hovering when pathfinding
-    // input::HoveredTile tile = input::GetHoveredTile();
-    // if (tile.valid) {
-    //     Rectangle tileRect = {
-    //         tile.x * TILE_TEXTURE_PIXEL_SIZE,
-    //         tile.y * TILE_TEXTURE_PIXEL_SIZE,
-    //         TILE_TEXTURE_PIXEL_SIZE,
-    //         TILE_TEXTURE_PIXEL_SIZE};
-
-    //     DrawRectangleRec(tileRect, Fade(YELLOW, 0.3f));
-    //     DrawRectangleLinesEx(tileRect, 1, ORANGE);
-    // }
-
     EndMode2D();
 
     if ((grid->gameState == GameState::WON || grid->gameState == GameState::LOST) &&
-        previousState == GameState::ONGOING) {
+        previousWindowState == GameState::ONGOING) {
         showEndscreen = true;
     }
 
-    previousState = grid->gameState;
+    previousWindowState = grid->gameState;
 
     if (showEndscreen) {
         int screenWidth = GetScreenWidth();
@@ -113,14 +97,14 @@ void DrawBoard(const Grid* grid) {
         // Handle [X] button — returns true if clicked
         const char* title = grid->gameState == GameState::WON ? "You Win!" : "Game Over!";
         if (GuiWindowBox(windowBounds, title)) {
-            showEndscreen = false;  // [X] button closes the popup
+            showEndscreen = false;  // x button window
             return;
         }
 
         // Menu button (centered below the title)
         Rectangle quitBtn = {boxX + 100, boxY + 110, 100, 30};
         if (GuiButton(quitBtn, "Menu")) {
-            windowState = WindowState::MENU;  // Go back to menu
+            windowState = WindowState::MENU;
             showEndscreen = false;
         }
     }

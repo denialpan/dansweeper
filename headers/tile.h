@@ -1,6 +1,7 @@
 #pragma once
 
 const int TILE_TEXTURE_PIXEL_SIZE = 16;
+const int TILESET_COLS = 4;
 
 enum TileId {
     TILE_1 = 0,
