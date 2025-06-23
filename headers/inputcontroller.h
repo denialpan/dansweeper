@@ -21,12 +21,12 @@ class InputController {
     GridCoordinates gc;
 
     void handleManualInput();
+    GridCoordinates handleHoverCursor(Camera2D& camera);
 
    private:
     void clampCameraTarget(Camera2D& camera);
     void handlePanning(Camera2D& camera);
     void handleZoomCursor(Camera2D& camera);
-    GridCoordinates handleHoverCursor(Camera2D& camera);
 
     void handleLeftClick();
     void handleRightClick();

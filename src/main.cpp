@@ -61,6 +61,7 @@ int main() {
     SetTextureFilter(customFont.texture, TEXTURE_FILTER_POINT);
 
     Grid* currentGrid = nullptr;
+    InputController* inputMethodology = nullptr;
     GridMetadata metadata;
 
     render::LoadAssets();
@@ -223,10 +224,9 @@ int main() {
             }
         } else if (windowState == WindowState::GAME || windowState == WindowState::PAUSE) {
             if (windowState != WindowState::PAUSE) {
-                InputController* manualSolve = new InputController(currentGrid);
+                inputMethodology = new InputController(currentGrid);
                 render::DrawBoard(currentGrid);
-                manualSolve->handleManualInput();
-                DrawTextEx(GetFontDefault(), currentGrid->getSeed32().c_str(), {10, 50}, 20, 1, RAYWHITE);
+                inputMethodology->handleManualInput();
             } else {
                 const int screenWidth = GetScreenWidth();
                 const int screenHeight = GetScreenHeight();
@@ -276,8 +276,12 @@ int main() {
             DrawTextEx(customFont, fpsText.c_str(), {10, 10}, 13, 1, WHITE);
             DrawTextEx(customFont, std::format("window state: {}", std::string(WindowStateToString(windowState))).c_str(), {10, 25}, 13, 1, WHITE);
 
-            if (currentGrid) {
+            if (inputMethodology) {
                 DrawTextEx(customFont, "grid: exists", {10, 40}, 13, 1, WHITE);
+                GridCoordinates coords = inputMethodology->handleHoverCursor(render::GetCamera());
+                DrawTextEx(customFont, std::format("(x, y): {}, {}", coords.x, coords.y).c_str(), {10, 55}, 13, 1, WHITE);
+                DrawTextEx(customFont, std::format("seed: {}", currentGrid->seed32).c_str(), {10, 70}, 13, 1, WHITE);
+
             } else {
                 DrawTextEx(customFont, std::format("grid: {}", NULL).c_str(), {10, 40}, 13, 1, WHITE);
             }

@@ -121,6 +121,10 @@ void InputController::clampCameraTarget(Camera2D& camera) {
 };
 
 GridCoordinates InputController::handleHoverCursor(Camera2D& camera) {
+    if (!grid) {
+        return {-1, -1};
+    }
+
     Vector2 world = GetScreenToWorld2D(GetMousePosition(), camera);
 
     int x = (int)(world.x / TILE_TEXTURE_PIXEL_SIZE);
