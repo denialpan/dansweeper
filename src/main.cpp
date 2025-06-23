@@ -231,21 +231,32 @@ int main() {
                 const int screenWidth = GetScreenWidth();
                 const int screenHeight = GetScreenHeight();
 
-                Rectangle panel = {screenWidth / 2 - 100, screenHeight / 2 - 100, 200, 220};
+                Rectangle windowRect = {
+                    screenWidth / 2.0f - 150,
+                    screenHeight / 2.0f - 150,
+                    300,
+                    250};
 
-                DrawRectangleRec(panel, DARKGRAY);
-                DrawRectangleLinesEx(panel, 2, LIGHTGRAY);
-                DrawText("Paused", panel.x + 60, panel.y + 20, 20, RAYWHITE);
-
-                if (GuiButton({panel.x + 30, panel.y + 60, 140, 30}, "Resume")) {
+                bool closeClicked = GuiWindowBox(windowRect, "Paused");
+                if (closeClicked) {
                     windowState = WindowState::GAME;
                 }
 
-                // if (GuiButton({panel.x + 30, panel.y + 100, 140, 30}, "Settings")) {
-                //     windowState = WindowState::SETTINGS;
-                // }
+                // Button layout
+                float btnWidth = 180;
+                float btnHeight = 35;
+                float btnX = windowRect.x + (windowRect.width - btnWidth) / 2;
+                float spacing = 20;
+                float startY = windowRect.y + 60;
 
-                if (GuiButton({panel.x + 30, panel.y + 140, 140, 30}, "Quit to Menu")) {
+                Rectangle resumeBtn = {btnX, startY, btnWidth, btnHeight};
+                Rectangle quitBtn = {btnX, startY + btnHeight + spacing, btnWidth, btnHeight};
+
+                if (GuiButton(resumeBtn, "Resume")) {
+                    windowState = WindowState::GAME;
+                }
+
+                if (GuiButton(quitBtn, "Quit to Menu")) {
                     windowState = WindowState::MENU;
                 }
             }
