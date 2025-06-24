@@ -177,8 +177,14 @@ GridMetadata validateMetadata(uint16_t width, uint16_t height, uint32_t numMines
 
     int validWidth = width % 250;
     int validHeight = height % 250;
-    std::uniform_int_distribution<int> mineDist(((validWidth * validHeight) - 1) * 0.15f, ((validWidth * validHeight) - 1) * 0.25f);
-    uint32_t validNumMines = mineDist(gen);
+    uint32_t validNumMines;
+
+    if (numMines > validWidth * validHeight - 1) {
+        std::uniform_int_distribution<int> mineDist(((validWidth * validHeight) - 1) * 0.01f, ((validWidth * validHeight) - 1) * 0.25f);
+        validNumMines = mineDist(gen);
+    } else {
+        validNumMines = numMines;
+    }
 
     int validSafeX = safeX % validWidth;
     int validSafeY = safeY % validHeight;

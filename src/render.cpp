@@ -46,7 +46,6 @@ void DrawBoard(const Grid* grid) {
     if (!grid) {
         return;
     };
-
     activeGrid = grid;
 
     camera.offset = {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};

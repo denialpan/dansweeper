@@ -40,13 +40,17 @@ void InputController::handleLeftClick() {
         return;
     }
 
-    // first click implementation
     if (grid->firstClick) {
-        grid->safeX = this->gc.x;
-        grid->safeY = this->gc.y;
-        grid->seed32 = gridutils::createSeedFromManualInput(grid->width, grid->height, grid->numMine, this->gc.x, this->gc.y, grid);
-        grid->generateBoard();
+        // first click implementation
+        if (!grid->useSeed) {
+            grid->safeX = this->gc.x;
+            grid->safeY = this->gc.y;
+            grid->seed32 = gridutils::createSeedFromManualInput(grid->width, grid->height, grid->numMine, this->gc.x, this->gc.y, grid);
+            grid->generateBoard();
+        }
         grid->firstClick = false;
+        grid->startTime = std::chrono::steady_clock::now();
+        grid->timerStarted = true;
     }
     grid->reveal(this->gc.x, this->gc.y);
     SetClipboardText(grid->getSeed32().c_str());

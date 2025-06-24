@@ -21,12 +21,12 @@
 // grid initialization
 Grid::Grid(GridMetadata& metadata, const std::string& seed32, bool useSeed) {
     // generate 16 character seed from manual input
+    this->useSeed = useSeed;
     if (!useSeed) {
         this->width = metadata.width;
         this->height = metadata.height;
         this->numMine = metadata.numMine;
         this->firstClick = true;
-
         this->cells.resize(this->height, std::vector<Cell>(this->width));
 
     } else {
@@ -38,6 +38,7 @@ Grid::Grid(GridMetadata& metadata, const std::string& seed32, bool useSeed) {
         this->safeX = decodedMetadata.safeX;
         this->safeY = decodedMetadata.safeY;
         this->seed32 = seed32;
+        this->firstClick = true;
 
         this->cells.resize(this->height, std::vector<Cell>(this->width));
         Grid::generateBoard();
@@ -152,8 +153,9 @@ void Grid::reveal(int startX, int startY) {
         }
     }
 
-    if (checkWinCondition())
+    if (checkWinCondition()) {
         gameState = GameState::WON;
+    }
 }
 
 void Grid::chord(int x, int y) {
@@ -211,6 +213,13 @@ bool Grid::checkWinCondition() {
         }
     }
     return true;
+}
+
+void Grid::updateTimer() {
+    if (timerStarted && gameState == GameState::ONGOING) {
+        auto now = std::chrono::steady_clock::now();
+        timeElapsed = std::chrono::duration<float>(now - startTime).count();
+    }
 }
 
 std::string Grid::getSeed32() const {

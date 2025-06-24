@@ -227,6 +227,7 @@ int main() {
                 inputMethodology = new InputController(currentGrid);
                 render::DrawBoard(currentGrid);
                 inputMethodology->handleManualInput();
+                currentGrid->updateTimer();
             } else {
                 const int screenWidth = GetScreenWidth();
                 const int screenHeight = GetScreenHeight();
@@ -283,7 +284,9 @@ int main() {
                 DrawTextEx(customFont, std::format("seed: {}", currentGrid->seed32).c_str(), {10, 70}, 13, 1, WHITE);
                 DrawTextEx(customFont, std::format("prng: {}", currentGrid->prngSeed).c_str(), {10, 85}, 13, 1, WHITE);
                 DrawTextEx(customFont, std::format("dims: {} x {}", currentGrid->width, currentGrid->height).c_str(), {10, 100}, 13, 1, WHITE);
-                DrawTextEx(customFont, std::format("safe: {}, {}", currentGrid->safeX, currentGrid->safeY).c_str(), {10, 115}, 13, 1, WHITE);
+                DrawTextEx(customFont, std::format("mine: {}", currentGrid->numMine).c_str(), {10, 115}, 13, 1, WHITE);
+                DrawTextEx(customFont, std::format("safe: {}, {}", currentGrid->safeX, currentGrid->safeY).c_str(), {10, 130}, 13, 1, WHITE);
+                DrawTextEx(customFont, std::format("time: {}", currentGrid->timeElapsed).c_str(), {10, 145}, 13, 1, WHITE);
             }
         }
         EndDrawing();
