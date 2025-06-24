@@ -30,21 +30,16 @@ const char* WindowStateToString(WindowState state) {
     }
 }
 
-// void DrawHoveredTileLabel() {
-//     inputController::HoveredTile hvt = inputController::GetHoveredTile();
-
-//     if (hvt.valid) {
-//         char buffer[32];
-//         snprintf(buffer, sizeof(buffer), "(%d, %d)", hvt.x, hvt.y);
-
-//         Vector2 textPos = {10, 10};  // Adjust as needed
-//         DrawTextEx(GetFontDefault(), buffer, textPos, 20, 1, RAYWHITE);
-//     }
-// }
-
 // helper sanitize text input
 bool isValidBase64Char(char c) {
     return (isalnum(c) || c == '+' || c == '/' || c == '=');
+}
+
+void resetGrid(Grid*& grid, InputController*& ipc) {
+    delete grid;
+    grid = nullptr;
+    delete ipc;
+    ipc = nullptr;
 }
 
 int main() {
@@ -78,6 +73,11 @@ int main() {
         ClearBackground(BLACK);
 
         if (windowState == WindowState::MENU) {
+            // if game exists, reset
+            if (currentGrid && inputMethodology) {
+                resetGrid(currentGrid, inputMethodology);
+            }
+
             int contentWidth = 250;
             int contentHeight = 290;  // Adjust based on number of elements
             int screenWidth = GetScreenWidth();
@@ -276,14 +276,14 @@ int main() {
             DrawTextEx(customFont, fpsText.c_str(), {10, 10}, 13, 1, WHITE);
             DrawTextEx(customFont, std::format("window state: {}", std::string(WindowStateToString(windowState))).c_str(), {10, 25}, 13, 1, WHITE);
 
-            if (inputMethodology) {
+            if (currentGrid && inputMethodology) {
                 DrawTextEx(customFont, "grid: exists", {10, 40}, 13, 1, WHITE);
                 GridCoordinates coords = inputMethodology->handleHoverCursor(render::GetCamera());
                 DrawTextEx(customFont, std::format("(x, y): {}, {}", coords.x, coords.y).c_str(), {10, 55}, 13, 1, WHITE);
                 DrawTextEx(customFont, std::format("seed: {}", currentGrid->seed32).c_str(), {10, 70}, 13, 1, WHITE);
-
-            } else {
-                DrawTextEx(customFont, std::format("grid: {}", NULL).c_str(), {10, 40}, 13, 1, WHITE);
+                DrawTextEx(customFont, std::format("prng: {}", currentGrid->prngSeed).c_str(), {10, 85}, 13, 1, WHITE);
+                DrawTextEx(customFont, std::format("dims: {} x {}", currentGrid->width, currentGrid->height).c_str(), {10, 100}, 13, 1, WHITE);
+                DrawTextEx(customFont, std::format("safe: {}, {}", currentGrid->safeX, currentGrid->safeY).c_str(), {10, 115}, 13, 1, WHITE);
             }
         }
         EndDrawing();

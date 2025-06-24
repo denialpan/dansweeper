@@ -110,10 +110,10 @@ GridMetadata decodeSeed(const std::string& seed) {
             uint16_t safeX = (bytes[16] << 8) | bytes[17];
             uint16_t safeY = (bytes[18] << 8) | bytes[19];
 
-            return GridMetadata{width, height, (int)numMines, (int)prngSeed, safeX, safeY};
+            return validateMetadata(width, height, numMines, prngSeed, safeX, safeY);
         }
-    } catch (int error) {
-        std::cerr << error;
+    } catch (const std::exception& e) {
+        std::cerr << "Seed decode error: " << e.what() << '\n';
     }
 
     // fall back random text
@@ -121,7 +121,7 @@ GridMetadata decodeSeed(const std::string& seed) {
     uint64_t prngSeed = hasher(seed);
 
     std::mt19937_64 gen(prngSeed);
-    std::uniform_int_distribution<int> sizeDist(10, 100);  // Or up to 1000 if allowed
+    std::uniform_int_distribution<int> sizeDist(10, 250);
     uint16_t width = sizeDist(gen);
     uint16_t height = sizeDist(gen);
 
@@ -171,5 +171,19 @@ std::array<int, 256> makeBase64ReverseMap() {
 
     return map;
 };
+
+GridMetadata validateMetadata(uint16_t width, uint16_t height, uint32_t numMines, uint64_t prngSeed, uint16_t safeX, uint16_t safeY) {
+    std::mt19937_64 gen(prngSeed);
+
+    int validWidth = width % 250;
+    int validHeight = height % 250;
+    std::uniform_int_distribution<int> mineDist(((validWidth * validHeight) - 1) * 0.15f, ((validWidth * validHeight) - 1) * 0.25f);
+    uint32_t validNumMines = mineDist(gen);
+
+    int validSafeX = safeX % validWidth;
+    int validSafeY = safeY % validHeight;
+
+    return GridMetadata{validWidth, validHeight, (int)validNumMines, (int)prngSeed, validSafeX, validSafeY};
+}
 
 }  // namespace gridutils
