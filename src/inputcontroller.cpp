@@ -23,6 +23,10 @@ void InputController::handleManualInput() {
     this->gc = handleHoverCursor(camera);
 
     // grid interactions second
+    if (grid->gameState != GameState::ONGOING) {
+        return;
+    }
+
     if (this->gc.x < 0 && this->gc.y < 0) {
         return;
     } else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -35,11 +39,6 @@ void InputController::handleManualInput() {
 };
 
 void InputController::handleLeftClick() {
-    // game already over
-    if (grid->gameState == GameState::WON || grid->gameState == GameState::LOST) {
-        return;
-    }
-
     if (grid->firstClick) {
         // first click implementation
         if (!grid->useSeed) {
@@ -57,17 +56,10 @@ void InputController::handleLeftClick() {
 };
 
 void InputController::handleRightClick() {
-    if (grid->gameState == GameState::WON || grid->gameState == GameState::LOST) {
-        return;
-    }
-
     grid->flag(this->gc.x, this->gc.y);
 };
 
 void InputController::handleMiddleClick() {
-    if (grid->gameState == GameState::WON || grid->gameState == GameState::LOST) {
-        return;
-    }
     grid->chord(this->gc.x, this->gc.y);
 }
 

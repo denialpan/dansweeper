@@ -228,6 +228,7 @@ int main() {
                 render::DrawBoard(currentGrid);
                 inputMethodology->handleManualInput();
             } else {
+                // pause implemented this way to prevent "pause board examination"
                 const int screenWidth = GetScreenWidth();
                 const int screenHeight = GetScreenHeight();
 

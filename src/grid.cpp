@@ -23,7 +23,6 @@
 
 // grid initialization
 Grid::Grid(GridMetadata& metadata, const std::string& seed32, bool useSeed) {
-    // generate 16 character seed from manual input
     this->useSeed = useSeed;
     if (!useSeed) {
         this->width = metadata.width;
@@ -113,7 +112,6 @@ void Grid::reveal(int startX, int startY) {
                 Cell& cell = cells[y][x];
                 if (cell.content == CELL_MINE) {
                     if (cell.flagged) {
-                        // Optional: keep flags on correct mines as-is
                         continue;
                     } else if (!cell.flagged) {
                         remainingMines++;
@@ -124,7 +122,6 @@ void Grid::reveal(int startX, int startY) {
                         cell.renderTile = TILE_MINE_REVEALED;
                     }
                 } else if (cell.flagged) {
-                    // Incorrect flag
                     cell.renderTile = TILE_MINE_WRONG;
                 }
             }
@@ -241,7 +238,6 @@ void Grid::updateTimer() {
     if (!this->timerRunning || this->gameState != GameState::ONGOING) {
         return;
     }
-    std::cout << startTime << "\n";
 
     switch (windowState) {
         case WindowState::GAME: {

@@ -75,6 +75,7 @@ void DrawBoard(const Grid* grid) {
 
     EndMode2D();
 
+    // draw endscreen once, allow post game examination
     if ((grid->gameState == GameState::WON || grid->gameState == GameState::LOST) &&
         previousWindowState == GameState::ONGOING) {
         showEndscreen = true;
@@ -86,7 +87,6 @@ void DrawBoard(const Grid* grid) {
         int screenWidth = GetScreenWidth();
         int screenHeight = GetScreenHeight();
 
-        // Larger window to show stats
         int boxWidth = 350;
         int boxHeight = 280;
         int boxX = (screenWidth - boxWidth) / 2;

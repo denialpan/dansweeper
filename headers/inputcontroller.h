@@ -3,12 +3,6 @@
 
 #include "headers/grid.h"
 
-enum PerformedAction {
-    OKAY,
-    INTERRUPTED,
-    END_GAME
-};
-
 struct GridCoordinates {
     int x;
     int y;
