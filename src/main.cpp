@@ -227,7 +227,6 @@ int main() {
                 inputMethodology = new InputController(currentGrid);
                 render::DrawBoard(currentGrid);
                 inputMethodology->handleManualInput();
-                currentGrid->updateTimer();
             } else {
                 const int screenWidth = GetScreenWidth();
                 const int screenHeight = GetScreenHeight();
@@ -265,6 +264,8 @@ int main() {
             if (IsKeyPressed(KEY_ESCAPE)) {
                 windowState = (windowState == WindowState::PAUSE) ? WindowState::GAME : WindowState::PAUSE;
             }
+
+            currentGrid->updateTimer();
         };
 
         if (IsKeyPressed(KEY_F3)) {

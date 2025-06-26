@@ -86,22 +86,33 @@ void DrawBoard(const Grid* grid) {
         int screenWidth = GetScreenWidth();
         int screenHeight = GetScreenHeight();
 
-        // Popup size and position
-        int boxWidth = 300;
-        int boxHeight = 180;
+        // Larger window to show stats
+        int boxWidth = 350;
+        int boxHeight = 280;
         int boxX = (screenWidth - boxWidth) / 2;
         int boxY = (screenHeight - boxHeight) / 2;
         Rectangle windowBounds = {(float)boxX, (float)boxY, (float)boxWidth, (float)boxHeight};
 
-        // Handle [X] button — returns true if clicked
         const char* title = grid->gameState == GameState::WON ? "You Win!" : "Game Over!";
         if (GuiWindowBox(windowBounds, title)) {
-            showEndscreen = false;  // x button window
+            showEndscreen = false;
             return;
         }
 
-        // Menu button (centered below the title)
-        Rectangle quitBtn = {boxX + 100, boxY + 110, 100, 30};
+        // Stat Labels
+        int labelX = boxX + 20;
+        int labelY = boxY + 40;
+        int spacing = 22;
+
+        GuiLabel((Rectangle){labelX, labelY + spacing * 0, 300, 20}, TextFormat("Time: %.3f sec", grid->endStats.timeElapsed));
+        GuiLabel((Rectangle){labelX, labelY + spacing * 1, 300, 20}, TextFormat("Revealed Tiles: %d", grid->endStats.numRevealed));
+        GuiLabel((Rectangle){labelX, labelY + spacing * 2, 300, 20}, TextFormat("Flags Placed: %d", grid->endStats.numFlagged));
+        GuiLabel((Rectangle){labelX, labelY + spacing * 3, 300, 20}, TextFormat("Bombs Left: %d", grid->endStats.bombsLeft));
+        GuiLabel((Rectangle){labelX, labelY + spacing * 4, 300, 20}, TextFormat("Board Size: %d x %d", grid->endStats.width, grid->endStats.height));
+        GuiLabel((Rectangle){labelX, labelY + spacing * 5, 300, 20}, TextFormat("Seed: %s", grid->endStats.seed32.c_str()));
+
+        // Menu Button
+        Rectangle quitBtn = {boxX + boxWidth / 2 - 50, boxY + boxHeight - 40, 100, 30};
         if (GuiButton(quitBtn, "Menu")) {
             windowState = WindowState::MENU;
             showEndscreen = false;

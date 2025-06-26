@@ -49,8 +49,8 @@ void InputController::handleLeftClick() {
             grid->generateBoard();
         }
         grid->firstClick = false;
-        grid->startTime = std::chrono::steady_clock::now();
-        grid->timerStarted = true;
+        grid->startTime = GetTime();
+        grid->timerRunning = true;
     }
     grid->reveal(this->gc.x, this->gc.y);
     SetClipboardText(grid->getSeed32().c_str());

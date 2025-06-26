@@ -15,6 +15,9 @@
 #include <unordered_set>
 #include <vector>
 
+#include "headers/globals.h"
+#include "raylib.h"
+
 // extremely messy grid seed generation handling
 #include "headers/utils/gridutils.h"
 
@@ -103,6 +106,8 @@ void Grid::reveal(int startX, int startY) {
 
     if (firstCell.content == CELL_MINE) {
         gameState = GameState::LOST;
+        int remainingMines = 0;
+
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 Cell& cell = cells[y][x];
@@ -110,6 +115,8 @@ void Grid::reveal(int startX, int startY) {
                     if (cell.flagged) {
                         // Optional: keep flags on correct mines as-is
                         continue;
+                    } else if (!cell.flagged) {
+                        remainingMines++;
                     }
 
                     if (!cell.revealed) {
@@ -123,6 +130,13 @@ void Grid::reveal(int startX, int startY) {
             }
         }
         cells[startY][startX].renderTile = TILE_MINE_HIT;
+
+        this->endStats.bombsLeft = remainingMines;
+        this->endStats.timeElapsed = this->timeElapsed;
+        this->endStats.height = this->height;
+        this->endStats.width = this->width;
+        this->endStats.seed32 = this->seed32;
+
         return;
     }
 
@@ -153,8 +167,15 @@ void Grid::reveal(int startX, int startY) {
         }
     }
 
+    this->endStats.numRevealed++;
+
     if (checkWinCondition()) {
         gameState = GameState::WON;
+        this->endStats.bombsLeft = 0;
+        this->endStats.timeElapsed = this->timeElapsed;
+        this->endStats.height = this->height;
+        this->endStats.width = this->width;
+        this->endStats.seed32 = this->seed32;
     }
 }
 
@@ -199,6 +220,7 @@ void Grid::flag(int x, int y) {
     if (cells[y][x].revealed == false) {
         cells[y][x].flagged = (cells[y][x].flagged == true) ? false : true;
         cells[y][x].renderTile = (cells[y][x].flagged == true) ? TILE_FLAG : TILE_BLANK;
+        this->endStats.numFlagged++;
     }
 }
 
@@ -216,9 +238,24 @@ bool Grid::checkWinCondition() {
 }
 
 void Grid::updateTimer() {
-    if (timerStarted && gameState == GameState::ONGOING) {
-        auto now = std::chrono::steady_clock::now();
-        timeElapsed = std::chrono::duration<float>(now - startTime).count();
+    if (!this->timerRunning || this->gameState != GameState::ONGOING) {
+        return;
+    }
+    std::cout << startTime << "\n";
+
+    switch (windowState) {
+        case WindowState::GAME: {
+            timeElapsed = static_cast<float>(GetTime() - startTime);
+            break;
+        }
+
+        case WindowState::PAUSE: {
+            startTime = static_cast<float>(GetTime() - timeElapsed);
+            break;
+        }
+
+        default:
+            break;
     }
 }
 
