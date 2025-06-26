@@ -12,7 +12,6 @@
 namespace render {
 
 static Texture2D textureTileset;
-static Texture2D borderTileset;
 static Camera2D camera;
 static const Grid* activeGrid = nullptr;
 
@@ -21,11 +20,8 @@ GameState previousWindowState = GameState::ONGOING;
 
 void LoadAssets() {
     Image texturemap = LoadImage("resources/texturemap.png");
-    Image bordermap = LoadImage("resources/bordermap.png");
     textureTileset = LoadTextureFromImage(texturemap);
-    borderTileset = LoadTextureFromImage(bordermap);
     UnloadImage(texturemap);
-    UnloadImage(bordermap);
 }
 
 void UnloadAssets() {

@@ -122,8 +122,8 @@ GridMetadata decodeSeed(const std::string& seed) {
 
     std::mt19937_64 gen(prngSeed);
     std::uniform_int_distribution<int> sizeDist(10, 250);
-    uint16_t width = sizeDist(gen);
-    uint16_t height = sizeDist(gen);
+    uint16_t width = sizeDist(gen) / 7;
+    uint16_t height = sizeDist(gen) / 7;
 
     int maxCells = width * height;
     int minMines = std::max(1, static_cast<int>(maxCells * 0.15));
