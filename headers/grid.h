@@ -1,6 +1,5 @@
 // headers/grid.h
 #pragma once
-#include <chrono>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -38,12 +37,12 @@ struct GridMetadata {
 };
 
 struct GridEndStats {
-    int timeElapsed;
-    int numFlagged;
-    int numRevealed;
+    float timeElapsed = 0.0f;
+    int numFlagged = 0.0f;
+    int numRevealed = 0.0f;
     int bombsLeft;
-    int width;
-    int height;
+    int width = 0.0f;
+    int height = 0.0f;
     std::string seed32;
 };
 
@@ -59,9 +58,9 @@ class Grid {
     int countAdjacentMines(int x, int y);
     bool checkWinCondition();
 
-    std::chrono::steady_clock::time_point startTime;
+    double startTime = 0.0f;
     float timeElapsed = 0.0f;
-    bool timerStarted = false;
+    bool timerRunning = false;
     void updateTimer();
 
     int width;
