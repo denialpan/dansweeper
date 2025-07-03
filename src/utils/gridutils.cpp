@@ -12,24 +12,7 @@
 namespace gridutils {
 
 // --- encoding ---
-std::string createSeedFromManualInput(uint16_t width, uint16_t height, uint32_t numMines, uint16_t safeX, uint16_t safeY, Grid* grid) {
-    auto now = std::chrono::high_resolution_clock::now();
-    auto timeNs = now.time_since_epoch().count();
-
-    std::ostringstream saltStream;
-    saltStream << std::hex << timeNs;
-
-    std::string salt = saltStream.str();
-
-    std::string fullKey = std::to_string(width) + "x" + std::to_string(height) +
-                          ":" + std::to_string(numMines) +
-                          ":" + std::to_string(safeX) + "," + std::to_string(safeY) +
-                          ":" + salt;
-
-    std::hash<std::string> hasher;
-    uint64_t prngSeed = hasher(fullKey);
-    grid->prngSeed = prngSeed;
-
+std::string createSeedFromManualInput(uint16_t width, uint16_t height, uint32_t numMines, uint16_t safeX, uint16_t safeY, uint64_t prngSeed) {
     return createBase64Seed(width, height, numMines, safeX, safeY, prngSeed);
 }
 

@@ -96,6 +96,37 @@ void Grid::generateBoard() {
 }
 
 void Grid::reveal(int startX, int startY) {
+    // big first click edge case check condition
+    // effects how the board is generated
+
+    if (this->firstClick) {
+        if (!this->useSeed) {
+            // generate prngseed on click
+            auto now = std::chrono::high_resolution_clock::now();
+            auto timeNs = now.time_since_epoch().count();
+
+            std::ostringstream saltStream;
+            saltStream << std::hex << timeNs;
+
+            std::string salt = saltStream.str();
+
+            std::string fullKey = std::to_string(this->width) + "x" + std::to_string(this->height) +
+                                  ":" + std::to_string(this->numMine) +
+                                  ":" + std::to_string(this->safeX) + "," + std::to_string(this->safeY) +
+                                  ":" + salt;
+
+            std::hash<std::string> hasher;
+            this->prngSeed = hasher(fullKey);
+            this->safeX = startX;
+            this->safeY = startY;
+            this->seed32 = gridutils::createSeedFromManualInput(this->width, this->height, this->numMine, this->safeX, this->safeY, this->prngSeed);
+            this->generateBoard();
+        }
+        this->firstClick = false;
+        this->startTime = GetTime();
+        this->timerRunning = true;
+    }
+
     // bfs implementation of floodfill
     // not related to solver of determining next tile to reveal
     if (startX < 0 || startX >= width || startY < 0 || startY >= height)
