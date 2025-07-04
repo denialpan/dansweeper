@@ -10,6 +10,7 @@
 #include "headers/inputcontroller.h"
 #include "headers/raygui.h"
 #include "headers/render.h"
+#include "headers/solver/solvercontroller.h"
 
 using namespace std;
 
@@ -57,6 +58,7 @@ int main() {
 
     Grid* currentGrid = nullptr;
     InputController* inputMethodology = nullptr;
+    SolverController* solverMethodology = nullptr;
     GridMetadata metadata;
 
     render::LoadAssets();
@@ -219,6 +221,8 @@ int main() {
                 metadata.numMine = numMine;
 
                 currentGrid = new Grid(metadata, std::string(seedText), useSeed);
+                solverMethodology = new SolverController();
+                solverMethodology->start(currentGrid, SolverType::BFS_WITH_FLAG_CSP, metadata.width / 2, metadata.height / 2);
                 render::CenterCameraOnMap(currentGrid);
                 windowState = WindowState::GAME;
             }
@@ -264,6 +268,10 @@ int main() {
 
             if (IsKeyPressed(KEY_ESCAPE)) {
                 windowState = (windowState == WindowState::PAUSE) ? WindowState::GAME : WindowState::PAUSE;
+            }
+
+            if (IsKeyPressed(KEY_S)) {
+                solverMethodology->step();
             }
 
             currentGrid->updateTimer();
