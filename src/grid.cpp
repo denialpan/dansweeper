@@ -245,6 +245,9 @@ void Grid::chord(int x, int y) {
 }
 
 void Grid::flag(int x, int y) {
+    if (x < 0 || x >= width || y < 0 || y >= height)
+        return;
+
     if (cells[y][x].revealed == false) {
         cells[y][x].flagged = (cells[y][x].flagged == true) ? false : true;
         cells[y][x].renderTile = (cells[y][x].flagged == true) ? TILE_FLAG : TILE_BLANK;
