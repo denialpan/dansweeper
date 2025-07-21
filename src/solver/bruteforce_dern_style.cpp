@@ -1,5 +1,3 @@
-#include "headers/solver/algorithms/BFS_with_flag_csp.h"
-
 #include <algorithm>
 #include <format>
 #include <iostream>
@@ -7,6 +5,7 @@
 #include <utility>
 
 #include "headers/grid.h"
+#include "headers/solver/algorithms/brute_force_dern_style.h"
 
 BFSFlagCSPSolver::BFSFlagCSPSolver(Grid* grid, int startX, int startY)
     : grid(grid) {
@@ -15,13 +14,11 @@ BFSFlagCSPSolver::BFSFlagCSPSolver(Grid* grid, int startX, int startY)
         return;
     }
 
-    // hacky cheat way to empty reset queue
-    std::queue<std::pair<int, int>> resetQueue;
-    std::set<std::pair<int, int>> resetQueue1;
+    // hacky cheat way to reset queue
+    std::set<std::pair<int, int>> resetSet;
+    std::swap(revealedNumberTiles, resetSet);
 
-    std::swap(queue, resetQueue);
-    std::swap(revealedNumberTiles, resetQueue1);
-    queue.push({startX, startY});
+    grid->reveal(startX, startY);
 }
 
 void BFSFlagCSPSolver::step() {
@@ -30,11 +27,7 @@ void BFSFlagCSPSolver::step() {
         return;
     }
 
-    if (!queue.empty()) {
-        auto [x, y] = queue.front();
-        grid->reveal(x, y);
-        queue.pop();
-
+    if (finished == false) {
         // get all revealed NUMBER tiles
         for (int i = 0; i < grid->height; i++) {
             for (int j = 0; j < grid->width; j++) {
@@ -49,8 +42,9 @@ void BFSFlagCSPSolver::step() {
         for (std::pair<int, int> revealedNumberTile : revealedNumberTiles) {
             auto [x, y] = revealedNumberTile;
             std::vector<std::pair<int, int>> neighbors = getNeighbors(x, y);
+            Cell& cellRevealedProperties = grid->cells[y][x];
 
-            int revealedNeighbors = 0;
+            int unrevealedNeighbors = 0;
             int flaggedNeighbors = 0;
 
             for (std::pair<int, int> neighbor : neighbors) {
@@ -69,16 +63,34 @@ void BFSFlagCSPSolver::step() {
                 }
 
                 if (cellNeighborProperties.revealed == false) {
-                    std::cout << "this tile is revealed " << neighborX << ", " << neighborY << "\n";
-                    revealedNeighbors++;
+                    std::cout << "this tile is unrevealed " << neighborX << ", " << neighborY << "\n";
+                    unrevealedNeighbors++;
                 }
             }
 
-            std::cout << std::format("flagged: {}, revealed: {} \n", flaggedNeighbors, revealedNeighbors);
+            std::cout << std::format("flagged: {}, revealed: {} \n", flaggedNeighbors, unrevealedNeighbors);
+            std::cout << std::format("revealed adjacency: {} \n", cellRevealedProperties.adjacentMines);
+
+            if (flaggedNeighbors == cellRevealedProperties.adjacentMines) {
+                for (std::pair<int, int> neighbor : neighbors) {
+                    auto [chordX, chordY] = neighbor;
+                    grid->chord(chordX, chordY);
+                }
+            }
+
+            if (unrevealedNeighbors == cellRevealedProperties.adjacentMines) {
+                for (std::pair<int, int> neighbor : neighbors) {
+                    auto [flagX, flagY] = neighbor;
+                    Cell& cellNeighborProperties = grid->cells[flagY][flagX];
+                    if (cellNeighborProperties.flagged == false && cellNeighborProperties.revealed == false) {
+                        grid->flag(flagX, flagY);
+                    }
+                }
+            }
         }
 
     } else {
-        std::cout << "drew ahh empty queue";
+        std::cout << "ended game";
     }
 }
 

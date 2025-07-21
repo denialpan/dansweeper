@@ -135,7 +135,7 @@ void Grid::reveal(int startX, int startY) {
     Cell& firstCell = cells[startY][startX];
 
     if (firstCell.revealed || firstCell.flagged) {
-        return void();
+        return;
     }
 
     if (firstCell.content == CELL_MINE) {

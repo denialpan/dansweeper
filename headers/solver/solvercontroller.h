@@ -5,7 +5,7 @@
 
 enum class SolverType {
     NONE,
-    BFS_WITH_FLAG_CSP,
+    BRUTE_FORCE_DERN_STYLE,
 };
 
 class SolverController {

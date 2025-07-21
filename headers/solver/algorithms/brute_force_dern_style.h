@@ -18,11 +18,7 @@ class BFSFlagCSPSolver : public SolverStepInterface {
     Grid* grid;
     bool finished = false;
 
-    std::queue<std::pair<int, int>> queue;
-    std::set<std::pair<int, int>> visited;
     std::set<std::pair<int, int>> revealedNumberTiles;
 
-    void processCurrentTile(int x, int y);
-    void performFallback();
     std::vector<std::pair<int, int>> getNeighbors(int x, int y);
 };

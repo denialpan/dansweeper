@@ -2,7 +2,7 @@
 #include "headers/solver/solvercontroller.h"
 
 #include "headers/grid.h"
-#include "headers/solver/algorithms/BFS_with_flag_csp.h"
+#include "headers/solver/algorithms/brute_force_dern_style.h"
 
 SolverController::SolverController() {};
 SolverController::~SolverController() {
@@ -32,7 +32,7 @@ void SolverController::start(Grid* grid, SolverType type, int startX, int startY
     this->currentType = type;
 
     switch (type) {
-        case SolverType::BFS_WITH_FLAG_CSP:
+        case SolverType::BRUTE_FORCE_DERN_STYLE:
             currentSolver = new BFSFlagCSPSolver(grid, startX, startY);
             break;
         default:

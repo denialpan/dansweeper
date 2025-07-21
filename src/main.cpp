@@ -222,7 +222,7 @@ int main() {
 
                 currentGrid = new Grid(metadata, std::string(seedText), useSeed);
                 solverMethodology = new SolverController();
-                solverMethodology->start(currentGrid, SolverType::BFS_WITH_FLAG_CSP, metadata.width / 2, metadata.height / 2);
+                solverMethodology->start(currentGrid, SolverType::BRUTE_FORCE_DERN_STYLE, metadata.width / 2, metadata.height / 2);
                 render::CenterCameraOnMap(currentGrid);
                 windowState = WindowState::GAME;
             }
@@ -297,6 +297,11 @@ int main() {
                 DrawTextEx(customFont, std::format("mine: {}", currentGrid->numMine).c_str(), {10, 115}, 13, 1, WHITE);
                 DrawTextEx(customFont, std::format("safe: {}, {}", currentGrid->safeX, currentGrid->safeY).c_str(), {10, 130}, 13, 1, WHITE);
                 DrawTextEx(customFont, std::format("time: {}", currentGrid->timeElapsed).c_str(), {10, 145}, 13, 1, WHITE);
+
+                if (!(coords.x < 0 || coords.x >= currentGrid->width || coords.y < 0 || coords.y >= currentGrid->height)) {
+                    Cell& cellPropertyState = currentGrid->cells[coords.y][coords.x];
+                    DrawTextEx(customFont, std::format("cell property state: {}, {}", cellPropertyState.flagged, cellPropertyState.revealed).c_str(), {10, 160}, 13, 1, WHITE);
+                }
             }
         }
         EndDrawing();
