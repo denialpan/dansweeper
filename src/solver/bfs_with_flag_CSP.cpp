@@ -1,6 +1,7 @@
 #include "headers/solver/algorithms/BFS_with_flag_csp.h"
 
 #include <algorithm>
+#include <format>
 #include <iostream>
 #include <queue>
 #include <utility>
@@ -37,89 +38,43 @@ void BFSFlagCSPSolver::step() {
         // get all revealed NUMBER tiles
         for (int i = 0; i < grid->height; i++) {
             for (int j = 0; j < grid->width; j++) {
-                Cell& cellProperties = grid->cells[i][j];
-                if (cellProperties.revealed && cellProperties.adjacentMines > 0) {
+                Cell& firstPass = grid->cells[i][j];
+                if (firstPass.revealed && firstPass.adjacentMines > 0 && revealedNumberTiles.find({j, i}) == revealedNumberTiles.end()) {
                     revealedNumberTiles.insert({j, i});
                     std::cout << "revealed number tile: " << j << ", " << i << "\n";
                 }
             }
         }
-        std::cout << "revealed tile: " << x << " " << y;
 
-        // push first occurrence of 100% safe tile
         for (std::pair<int, int> revealedNumberTile : revealedNumberTiles) {
+            auto [x, y] = revealedNumberTile;
+            std::vector<std::pair<int, int>> neighbors = getNeighbors(x, y);
+
+            int revealedNeighbors = 0;
             int flaggedNeighbors = 0;
-            int unrevealedNeighbors = 0;
-
-            auto [revealedX, revealedY] = revealedNumberTile;
-            Cell& revealedNumberTileProperties = grid->cells[revealedY][revealedX];
-            Cell& neighborCellProperties = grid->cells[0][0];
-            std::vector<std::pair<int, int>> neighbors = getNeighbors(revealedX, revealedY);
-            int neighborX = -1;
-            int neighborY = -1;
 
             for (std::pair<int, int> neighbor : neighbors) {
-                neighborX = neighbor.first;
-                neighborY = neighbor.second;
+                auto [neighborX, neighborY] = neighbor;
+                std::cout << "checking revealed number tile: " << neighborX << ", " << neighborY << "\n";
+                Cell& cellNeighborProperties = grid->cells[neighborY][neighborX];
 
-                if (neighborX < 0 || neighborX > grid->width - 1 || neighborY < 0 || neighborY > grid->height - 1) {
+                if (cellNeighborProperties.revealed == true) {
+                    std::cout << "skipped " << neighborX << ", " << neighborY << "\n";
                     continue;
                 }
 
-                if (neighborCellProperties.revealed) {
-                    continue;
-                }
-
-                if (neighborCellProperties.flagged) {
+                if (cellNeighborProperties.flagged == true) {
+                    std::cout << "flagged " << neighborX << ", " << neighborY << "\n";
                     flaggedNeighbors++;
                 }
 
-                if (!neighborCellProperties.revealed) {
-                    unrevealedNeighbors++;
+                if (cellNeighborProperties.revealed == false) {
+                    std::cout << "this tile is revealed " << neighborX << ", " << neighborY << "\n";
+                    revealedNeighbors++;
                 }
             }
 
-            if (unrevealedNeighbors == revealedNumberTileProperties.adjacentMines) {
-                for (std::pair<int, int> neighbor : neighbors) {
-                    auto [x, y] = neighbor;
-                    neighborCellProperties = grid->cells[y][x];
-                    if (!neighborCellProperties.flagged) {
-                        grid->flag(x, y);
-                    }
-                }
-            }
-
-            // yeah you're going to jail for making this for loop again
-            flaggedNeighbors = 0;
-            unrevealedNeighbors = 0;
-            for (std::pair<int, int> neighbor : neighbors) {
-                neighborX = neighbor.first;
-                neighborY = neighbor.second;
-
-                if (neighborX < 0 || neighborX > grid->width - 1 || neighborY < 0 || neighborY > grid->height - 1) {
-                    continue;
-                }
-
-                Cell& neighborCellProperties = grid->cells[neighborY][neighborX];
-
-                if (neighborCellProperties.revealed) {
-                    continue;
-                }
-
-                if (neighborCellProperties.flagged) {
-                    flaggedNeighbors++;
-                }
-
-                if (!neighborCellProperties.revealed) {
-                    unrevealedNeighbors++;
-                }
-            }
-
-            if (flaggedNeighbors == revealedNumberTileProperties.adjacentMines) {
-                for (std::pair<int, int> neighbor : neighbors) {
-                    queue.push(neighbor);
-                }
-            }
+            std::cout << std::format("flagged: {}, revealed: {} \n", flaggedNeighbors, revealedNeighbors);
         }
 
     } else {
@@ -136,6 +91,10 @@ std::vector<std::pair<int, int>> BFSFlagCSPSolver::getNeighbors(int x, int y) {
     for (int dy = -1; dy <= 1; ++dy)
         for (int dx = -1; dx <= 1; ++dx)
             if (dx != 0 || dy != 0)
-                neighbors.emplace_back(x + dx, y + dy);
+
+                // if out of bounds neighbor
+                if (!(x + dx < 0 || x + dx >= grid->width || y + dy < 0 || y + dy >= grid->height))
+                    neighbors.emplace_back(x + dx, y + dy);
+
     return neighbors;
 }

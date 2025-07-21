@@ -134,6 +134,10 @@ void Grid::reveal(int startX, int startY) {
 
     Cell& firstCell = cells[startY][startX];
 
+    if (firstCell.revealed || firstCell.flagged) {
+        return void();
+    }
+
     if (firstCell.content == CELL_MINE) {
         gameState = GameState::LOST;
         int remainingMines = 0;
