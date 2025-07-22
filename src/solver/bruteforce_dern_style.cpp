@@ -1,7 +1,9 @@
 #include <algorithm>
+#include <ctime>
 #include <format>
 #include <iostream>
 #include <queue>
+#include <random>
 #include <utility>
 
 #include "headers/grid.h"
@@ -28,6 +30,12 @@ void BFSFlagCSPSolver::step() {
     }
 
     if (finished == false) {
+        bool chordOrFlagged = false;
+
+        // heuristic values if needed
+        float heuristicRatio = 1.0f;
+        std::pair<int, int> heuristicPair = {-1, -1};
+
         // get all revealed NUMBER tiles
         for (int i = 0; i < grid->height; i++) {
             for (int j = 0; j < grid->width; j++) {
@@ -46,6 +54,7 @@ void BFSFlagCSPSolver::step() {
 
             int unrevealedNeighbors = 0;
             int flaggedNeighbors = 0;
+            int bothFlaggedAndUnrevealed = 0;
 
             for (std::pair<int, int> neighbor : neighbors) {
                 auto [neighborX, neighborY] = neighbor;
@@ -63,7 +72,7 @@ void BFSFlagCSPSolver::step() {
                 }
 
                 if (cellNeighborProperties.revealed == false) {
-                    std::cout << "this tile is unrevealed " << neighborX << ", " << neighborY << "\n";
+                    std::cout << "this tile is unrevealed and not flagged " << neighborX << ", " << neighborY << "\n";
                     unrevealedNeighbors++;
                 }
             }
@@ -72,10 +81,16 @@ void BFSFlagCSPSolver::step() {
             std::cout << std::format("revealed adjacency: {} \n", cellRevealedProperties.adjacentMines);
 
             if (flaggedNeighbors == cellRevealedProperties.adjacentMines) {
-                for (std::pair<int, int> neighbor : neighbors) {
-                    auto [chordX, chordY] = neighbor;
-                    grid->chord(chordX, chordY);
+                // unnecessary chord again if all thats around is flagged == unrevealed
+                if (unrevealedNeighbors != flaggedNeighbors) {
+                    grid->chord(x, y);
+                    chordOrFlagged = true;
+                    std::cout << "chorded \n";
                 }
+            }
+
+            if (cellRevealedProperties.flagged && !cellRevealedProperties.revealed) {
+                bothFlaggedAndUnrevealed++;
             }
 
             if (unrevealedNeighbors == cellRevealedProperties.adjacentMines) {
@@ -84,9 +99,40 @@ void BFSFlagCSPSolver::step() {
                     Cell& cellNeighborProperties = grid->cells[flagY][flagX];
                     if (cellNeighborProperties.flagged == false && cellNeighborProperties.revealed == false) {
                         grid->flag(flagX, flagY);
+                        chordOrFlagged = true;
                     }
                 }
             }
+
+            if (!chordOrFlagged) {
+                float possibleMine = cellRevealedProperties.adjacentMines - bothFlaggedAndUnrevealed;
+                if (possibleMine > 0 && unrevealedNeighbors > 0 && possibleMine / unrevealedNeighbors < heuristicRatio) {
+                    heuristicRatio = possibleMine / unrevealedNeighbors;
+
+                    static std::mt19937 rng(static_cast<unsigned int>(std::time(nullptr)));
+                    std::uniform_int_distribution<size_t> dist(0, neighbors.size() - 1);
+
+                    // randomly choose so terribly
+                    while (true) {
+                        heuristicPair = neighbors[dist(rng)];
+                        auto [heuristicX, heuristicY] = heuristicPair;
+                        Cell& cellHeuristicProperties = grid->cells[heuristicY][heuristicX];
+
+                        if (cellHeuristicProperties.revealed == false && cellHeuristicProperties.flagged == false) {
+                            heuristicPair = {heuristicX, heuristicY};
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // fallback heuristic
+        // choose best tile given lowest ratio of possible mines left / unrevealed neighbors
+        if (!chordOrFlagged) {
+            auto [x, y] = heuristicPair;
+            grid->reveal(x, y);
+            std::cout << std::format("guess reveal with a ratio of {}: {}, {}", heuristicRatio, x, y);
         }
 
     } else {
