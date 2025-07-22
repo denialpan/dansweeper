@@ -7,9 +7,9 @@
 #include "headers/grid.h"
 #include "headers/solver/solverinterface.h"
 
-class BFSFlagCSPSolver : public SolverStepInterface {
+class BruteForceDernStyle : public SolverStepInterface {
    public:
-    BFSFlagCSPSolver(Grid* grid, int startX, int startY);
+    BruteForceDernStyle(Grid* grid, int startX, int startY);
 
     void step() override;
     bool isFinished() const override;

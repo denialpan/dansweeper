@@ -9,7 +9,7 @@
 #include "headers/grid.h"
 #include "headers/solver/algorithms/brute_force_dern_style.h"
 
-BFSFlagCSPSolver::BFSFlagCSPSolver(Grid* grid, int startX, int startY)
+BruteForceDernStyle::BruteForceDernStyle(Grid* grid, int startX, int startY)
     : grid(grid) {
     if (!grid || grid->cells[startY][startX].content == CELL_MINE) {
         finished = true;
@@ -23,7 +23,7 @@ BFSFlagCSPSolver::BFSFlagCSPSolver(Grid* grid, int startX, int startY)
     grid->reveal(startX, startY);
 }
 
-void BFSFlagCSPSolver::step() {
+void BruteForceDernStyle::step() {
     if (grid->gameState != GameState::ONGOING) {
         finished = true;
         return;
@@ -140,11 +140,11 @@ void BFSFlagCSPSolver::step() {
     }
 }
 
-bool BFSFlagCSPSolver::isFinished() const {
+bool BruteForceDernStyle::isFinished() const {
     return finished;
 }
 
-std::vector<std::pair<int, int>> BFSFlagCSPSolver::getNeighbors(int x, int y) {
+std::vector<std::pair<int, int>> BruteForceDernStyle::getNeighbors(int x, int y) {
     std::vector<std::pair<int, int>> neighbors;
     for (int dy = -1; dy <= 1; ++dy)
         for (int dx = -1; dx <= 1; ++dx)

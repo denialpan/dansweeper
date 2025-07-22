@@ -33,7 +33,7 @@ void SolverController::start(Grid* grid, SolverType type, int startX, int startY
 
     switch (type) {
         case SolverType::BRUTE_FORCE_DERN_STYLE:
-            currentSolver = new BFSFlagCSPSolver(grid, startX, startY);
+            currentSolver = new BruteForceDernStyle(grid, startX, startY);
             break;
         default:
             currentSolver = nullptr;
