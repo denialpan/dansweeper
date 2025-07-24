@@ -295,9 +295,17 @@ void Grid::updateTimer() {
 
 Cell Grid::getCellProperties(int x, int y) {
     if (validateCellInBounds(x, y)) {
-        return cells[y][x];
+        return this->cells[y][x];
     }
     return {};
+}
+
+int Grid::getGridWidth() {
+    return this->width;
+}
+
+int Grid::getGridHeight() {
+    return this->height;
 }
 
 bool Grid::validateCellInBounds(int x, int y) {

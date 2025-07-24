@@ -32,9 +32,9 @@ void BruteForceDernStyle::step() {
         std::pair<int, int> heuristicPair = {-1, -1};
 
         // get all revealed NUMBER tiles
-        for (int i = 0; i < grid->height; i++) {
-            for (int j = 0; j < grid->width; j++) {
-                Cell& firstPass = grid->cells[i][j];
+        for (int i = 0; i < grid->getGridHeight(); i++) {
+            for (int j = 0; j < grid->getGridWidth(); j++) {
+                Cell firstPass = grid->getCellProperties(j, i);
                 if (firstPass.revealed && firstPass.adjacentMines > 0 && revealedNumberTiles.find({j, i}) == revealedNumberTiles.end()) {
                     revealedNumberTiles.insert({j, i});
                     std::cout << "revealed number tile: " << j << ", " << i << "\n";
@@ -45,7 +45,7 @@ void BruteForceDernStyle::step() {
         for (std::pair<int, int> revealedNumberTile : revealedNumberTiles) {
             auto [x, y] = revealedNumberTile;
             std::vector<std::pair<int, int>> neighbors = getNeighbors(x, y);
-            Cell& cellRevealedProperties = grid->cells[y][x];
+            Cell cellRevealedProperties = grid->getCellProperties(x, y);
 
             int unrevealedNeighbors = 0;
             int flaggedNeighbors = 0;
@@ -54,7 +54,7 @@ void BruteForceDernStyle::step() {
             for (std::pair<int, int> neighbor : neighbors) {
                 auto [neighborX, neighborY] = neighbor;
                 std::cout << "checking revealed number tile: " << neighborX << ", " << neighborY << "\n";
-                Cell& cellNeighborProperties = grid->cells[neighborY][neighborX];
+                Cell cellNeighborProperties = grid->getCellProperties(neighborX, neighborY);
 
                 if (cellNeighborProperties.revealed == true) {
                     std::cout << "skipped " << neighborX << ", " << neighborY << "\n";
@@ -91,7 +91,7 @@ void BruteForceDernStyle::step() {
             if (unrevealedNeighbors == cellRevealedProperties.adjacentMines) {
                 for (std::pair<int, int> neighbor : neighbors) {
                     auto [flagX, flagY] = neighbor;
-                    Cell& cellNeighborProperties = grid->cells[flagY][flagX];
+                    Cell cellNeighborProperties = grid->getCellProperties(flagX, flagY);
                     if (cellNeighborProperties.flagged == false && cellNeighborProperties.revealed == false) {
                         grid->flag(flagX, flagY);
                         chordOrFlagged = true;
@@ -111,7 +111,7 @@ void BruteForceDernStyle::step() {
                     while (true) {
                         heuristicPair = neighbors[dist(rng)];
                         auto [heuristicX, heuristicY] = heuristicPair;
-                        Cell& cellHeuristicProperties = grid->cells[heuristicY][heuristicX];
+                        Cell cellHeuristicProperties = grid->getCellProperties(heuristicX, heuristicY);
 
                         if (cellHeuristicProperties.revealed == false && cellHeuristicProperties.flagged == false) {
                             heuristicPair = {heuristicX, heuristicY};

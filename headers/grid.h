@@ -52,13 +52,18 @@ class Grid {
     GameState gameState = GameState::ONGOING;
 
     void generateBoard();
-    void reveal(int x, int y);
-    void chord(int x, int y);
-    void flag(int x, int y);
     int countAdjacentMines(int x, int y);
     bool checkWinCondition();
     bool validateCellInBounds(int x, int y);
+
+    // user interactions and allowed solver interactions
+    // see solvercontroller.cpp for arbitrary "rules"
+    void reveal(int x, int y);
+    void chord(int x, int y);
+    void flag(int x, int y);
     Cell getCellProperties(int x, int y);
+    int getGridWidth();
+    int getGridHeight();
 
     double startTime = 0.0f;
     float timeElapsed = 0.0f;
