@@ -222,7 +222,7 @@ int main() {
 
                 currentGrid = new Grid(metadata, std::string(seedText), useSeed);
                 solverMethodology = new SolverController();
-                solverMethodology->start(currentGrid, SolverType::BRUTE_FORCE_DERN_STYLE, metadata.width / 2, metadata.height / 2);
+                solverMethodology->start(currentGrid, SolverType::BRUTE_FORCE_DERN_STYLE);
                 render::CenterCameraOnMap(currentGrid);
                 windowState = WindowState::GAME;
             }

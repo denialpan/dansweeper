@@ -9,7 +9,7 @@
 
 class BruteForceDernStyle : public SolverStepInterface {
    public:
-    BruteForceDernStyle(Grid* grid, int startX, int startY);
+    BruteForceDernStyle(Grid* grid);
 
     void step() override;
     bool isFinished() const override;

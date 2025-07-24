@@ -9,18 +9,13 @@
 #include "headers/grid.h"
 #include "headers/solver/algorithms/brute_force_dern_style.h"
 
-BruteForceDernStyle::BruteForceDernStyle(Grid* grid, int startX, int startY)
+BruteForceDernStyle::BruteForceDernStyle(Grid* grid)
     : grid(grid) {
-    if (!grid || grid->cells[startY][startX].content == CELL_MINE) {
-        finished = true;
-        return;
-    }
-
     // hacky cheat way to reset queue
     std::set<std::pair<int, int>> resetSet;
     std::swap(revealedNumberTiles, resetSet);
 
-    grid->reveal(startX, startY);
+    grid->reveal(grid->width / 2, grid->height / 2);
 }
 
 void BruteForceDernStyle::step() {

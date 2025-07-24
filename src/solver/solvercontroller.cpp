@@ -28,7 +28,7 @@ while tile information for player is visually displayed as rendered tiles, the r
 - all information must be retrieved by the solver itself
  */
 
-void SolverController::start(Grid* grid, SolverType type, int startX, int startY) {
+void SolverController::start(Grid* grid, SolverType type) {
     stop();
 
     if (currentSolver != nullptr) {
@@ -41,7 +41,7 @@ void SolverController::start(Grid* grid, SolverType type, int startX, int startY
 
     switch (type) {
         case SolverType::BRUTE_FORCE_DERN_STYLE:
-            currentSolver = new BruteForceDernStyle(grid, startX, startY);
+            currentSolver = new BruteForceDernStyle(grid);
             break;
         default:
             currentSolver = nullptr;

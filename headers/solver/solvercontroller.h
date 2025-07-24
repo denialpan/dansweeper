@@ -18,7 +18,7 @@ class SolverController {
     SolverController();
     ~SolverController();
 
-    void start(Grid* grid, SolverType type, int startX, int startY);
+    void start(Grid* grid, SolverType type);
     void step();
     bool isFinished() const;
     void stop();
