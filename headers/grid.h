@@ -57,6 +57,8 @@ class Grid {
     void flag(int x, int y);
     int countAdjacentMines(int x, int y);
     bool checkWinCondition();
+    bool validateCellInBounds(int x, int y);
+    Cell getCellProperties(int x, int y);
 
     double startTime = 0.0f;
     float timeElapsed = 0.0f;

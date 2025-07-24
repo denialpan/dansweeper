@@ -1,11 +1,17 @@
 
 #include "headers/solver/solvercontroller.h"
 
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+
 #include "headers/grid.h"
 #include "headers/solver/algorithms/brute_force_dern_style.h"
 
 SolverController::SolverController() {};
 SolverController::~SolverController() {
+    stop();
     delete this->currentSolver;
 }
 
@@ -23,6 +29,8 @@ while tile information for player is visually displayed as rendered tiles, the r
  */
 
 void SolverController::start(Grid* grid, SolverType type, int startX, int startY) {
+    stop();
+
     if (currentSolver != nullptr) {
         delete currentSolver;
         currentSolver = nullptr;
@@ -39,11 +47,46 @@ void SolverController::start(Grid* grid, SolverType type, int startX, int startY
             currentSolver = nullptr;
             break;
     }
+
+    running = true;
+    solverThread = std::thread(&SolverController::solverThreadLoop, this);
 }
 
 void SolverController::step() {
     if (currentSolver && !currentSolver->isFinished()) {
+        stepRequested = true;
+        stepCV.notify_one();
+    }
+}
+
+void SolverController::solverThreadLoop() {
+    while (running && currentSolver && !currentSolver->isFinished()) {
+        std::unique_lock<std::mutex> lock(stepMutex);
+        stepCV.wait(lock, [&]() {
+            return stepRequested || !running;
+        });
+
+        if (!running) {
+            break;
+        }
+
+        stepRequested = false;
         currentSolver->step();
+    }
+}
+
+void SolverController::stop() {
+    running = false;
+    stepRequested = false;
+    stepCV.notify_all();
+
+    if (solverThread.joinable()) {
+        solverThread.join();
+    }
+
+    if (currentSolver) {
+        delete currentSolver;
+        currentSolver = nullptr;
     }
 }
 

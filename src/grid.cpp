@@ -293,6 +293,17 @@ void Grid::updateTimer() {
     }
 }
 
+Cell Grid::getCellProperties(int x, int y) {
+    if (validateCellInBounds(x, y)) {
+        return cells[y][x];
+    }
+    return {};
+}
+
+bool Grid::validateCellInBounds(int x, int y) {
+    return x >= 0 && x < width && y >= 0 && y < height;
+}
+
 std::string Grid::getSeed32() const {
     return this->seed32;
 }
