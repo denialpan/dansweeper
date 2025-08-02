@@ -1,6 +1,8 @@
 #include "headers/render.h"
 
 #include <iostream>
+#include <mutex>
+#include <vector>
 
 #include "headers/globals.h"
 #include "headers/grid.h"
@@ -15,8 +17,17 @@ static Texture2D textureTileset;
 static Camera2D camera;
 static const Grid* activeGrid = nullptr;
 
+// highlight tile
+static std::vector<std::pair<int, int>> highlightedTiles;
+static std::mutex highlightMutex;
+
 bool showEndscreen = false;
 GameState previousWindowState = GameState::ONGOING;
+
+void QueueHighlight(int x, int y) {
+    std::lock_guard<std::mutex> lock(highlightMutex);
+    highlightedTiles.push_back({x, y});
+}
 
 void LoadAssets() {
     Image texturemap = LoadImage("resources/texturemap.png");
@@ -69,6 +80,8 @@ void DrawBoard(const Grid* grid) {
         }
     };
 
+    render::highlightTile();
+
     EndMode2D();
 
     // draw endscreen once, allow post game examination
@@ -114,6 +127,20 @@ void DrawBoard(const Grid* grid) {
             showEndscreen = false;
         }
     }
+}
+
+void highlightTile() {
+    std::lock_guard<std::mutex> lock(highlightMutex);
+    for (std::pair<int, int> tilePos : highlightedTiles) {
+        Rectangle tile = {
+            tilePos.first * TILE_TEXTURE_PIXEL_SIZE,
+            tilePos.second * TILE_TEXTURE_PIXEL_SIZE,
+            TILE_TEXTURE_PIXEL_SIZE,
+            TILE_TEXTURE_PIXEL_SIZE};
+        DrawRectangleRec(tile, Fade(YELLOW, 0.3f));
+        DrawRectangleLinesEx(tile, 1, RED);
+    }
+    highlightedTiles.clear();  // Draw once per frame
 }
 
 Camera2D& GetCamera() {

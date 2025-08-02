@@ -18,6 +18,9 @@ void CenterCameraOnMap(const Grid* grid);
 int GetMapPixelWidth();
 int GetMapPixelHeight();
 
+void QueueHighlight(int x, int y);
+void highlightTile();
+
 void DrawScreenBorderFromTileset(Texture2D borderTexture, int sliceSize);
 }  // namespace render
 

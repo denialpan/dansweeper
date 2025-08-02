@@ -7,14 +7,12 @@
 #include <utility>
 
 #include "headers/grid.h"
+#include "headers/render.h"
 #include "headers/solver/algorithms/brute_force_dern_style.h"
 
 BruteForceDernStyle::BruteForceDernStyle(Grid* grid)
     : grid(grid) {
-    // hacky cheat way to reset queue
-    std::set<std::pair<int, int>> resetSet;
-    std::swap(revealedNumberTiles, resetSet);
-
+    revealedNumberTiles.clear();
     grid->reveal(grid->width / 2, grid->height / 2);
 }
 
@@ -46,6 +44,7 @@ void BruteForceDernStyle::step() {
             auto [x, y] = revealedNumberTile;
             std::vector<std::pair<int, int>> neighbors = getNeighbors(x, y);
             Cell cellRevealedProperties = grid->getCellProperties(x, y);
+            render::QueueHighlight(x, y);
 
             int unrevealedNeighbors = 0;
             int flaggedNeighbors = 0;
@@ -146,8 +145,9 @@ std::vector<std::pair<int, int>> BruteForceDernStyle::getNeighbors(int x, int y)
             if (dx != 0 || dy != 0)
 
                 // if out of bounds neighbor
-                if (!(x + dx < 0 || x + dx >= grid->width || y + dy < 0 || y + dy >= grid->height))
+                if (!(x + dx < 0 || x + dx >= grid->width || y + dy < 0 || y + dy >= grid->height)) {
                     neighbors.emplace_back(x + dx, y + dy);
+                }
 
     return neighbors;
 }

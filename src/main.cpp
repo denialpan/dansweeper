@@ -31,6 +31,12 @@ const char* WindowStateToString(WindowState state) {
     }
 }
 
+enum class MenuMode {
+    MANUAL,
+    SEED,
+    SOLVER,
+};
+
 // helper sanitize text input
 bool isValidBase64Char(char c) {
     return (isalnum(c) || c == '+' || c == '/' || c == '=');
@@ -56,6 +62,7 @@ int main() {
     Font customFont = LoadFontEx("resources/ProggyClean.ttf", 13, 0, 250);
     SetTextureFilter(customFont.texture, TEXTURE_FILTER_POINT);
 
+    static MenuMode menuMode = MenuMode::MANUAL;
     Grid* currentGrid = nullptr;
     InputController* inputMethodology = nullptr;
     SolverController* solverMethodology = nullptr;
@@ -92,126 +99,152 @@ int main() {
 
             static bool useSeed = false;  // false = manual, true = seed
 
-            // Title
-            GuiLabel((Rectangle){originX, originY, 250, 20}, "dansweeper");
-
-            // Toggle button
-            if (GuiButton((Rectangle){originX, originY + 30, 250, 30},
-                          useSeed ? "Custom" : "Seed")) {
-                useSeed = !useSeed;
+            const char* modeLabel = "";
+            switch (menuMode) {
+                case MenuMode::MANUAL:
+                    modeLabel = "Manual";
+                    break;
+                case MenuMode::SEED:
+                    modeLabel = "Seed";
+                    break;
+                case MenuMode::SOLVER:
+                    modeLabel = "Solver";
+                    break;
             }
 
-            // Manual config
-            if (!useSeed) {
-                float tempGridWidth = (float)gridWidth;
-                float tempGridHeight = (float)gridHeight;
-                float tempNumMines = (float)numMine;
+            GuiLabel((Rectangle){originX, originY, 250, 20}, "dansweeper");
 
-                static char widthInput[8] = "9";
-                static char heightInput[8] = "9";
-                static char minesInput[8] = "10";
-                static bool widthEdit = false;
-                static bool heightEdit = false;
-                static bool minesEdit = false;
+            // cycle toggle between 3
+            if (GuiButton((Rectangle){originX, originY + 30, 250, 30}, modeLabel)) {
+                menuMode = static_cast<MenuMode>(((static_cast<int>(menuMode) + 1)) % 3);
+            }
 
-                int maxMines = gridWidth * gridHeight - 1;
+            switch (menuMode) {
+                case MenuMode::MANUAL: {
+                    float tempGridWidth = (float)gridWidth;
+                    float tempGridHeight = (float)gridHeight;
+                    float tempNumMines = (float)numMine;
 
-                const int rowHeight = 30;
-                auto GetRowY = [&](int row) {
-                    return originY + row * rowHeight;
-                };
+                    static char widthInput[8] = "9";
+                    static char heightInput[8] = "9";
+                    static char minesInput[8] = "10";
+                    static bool widthEdit = false;
+                    static bool heightEdit = false;
+                    static bool minesEdit = false;
 
-                int row = 3;  // Skip 0 = title, 1 = seed toggle
+                    int maxMines = gridWidth * gridHeight - 1;
 
-                // --- Difficulty Presets on Row 2 ---
-                int buttonWidth = (contentWidth - 14) / 4;
-                int buttonY = GetRowY(row++);
+                    const int rowHeight = 30;
+                    auto GetRowY = [&](int row) {
+                        return originY + row * rowHeight;
+                    };
 
-                if (GuiButton({(float)originX + 0 * (buttonWidth + 5), (float)buttonY, (float)buttonWidth, 20}, "Easy")) {
-                    tempGridWidth = 9;
-                    tempGridHeight = 9;
-                    tempNumMines = 10;
-                    snprintf(widthInput, sizeof(widthInput), "%d", 9);
-                    snprintf(heightInput, sizeof(heightInput), "%d", 9);
-                    snprintf(minesInput, sizeof(minesInput), "%d", 10);
-                }
-                if (GuiButton({(float)originX + 1 * (buttonWidth + 5), (float)buttonY, (float)buttonWidth, 20}, "Medium")) {
-                    tempGridWidth = 16;
-                    tempGridHeight = 16;
-                    tempNumMines = 40;
-                    snprintf(widthInput, sizeof(widthInput), "%d", 16);
-                    snprintf(heightInput, sizeof(heightInput), "%d", 16);
-                    snprintf(minesInput, sizeof(minesInput), "%d", 40);
-                }
-                if (GuiButton({(float)originX + 2 * (buttonWidth + 5), (float)buttonY, (float)buttonWidth, 20}, "Hard")) {
-                    tempGridWidth = 30;
-                    tempGridHeight = 16;
-                    tempNumMines = 99;
-                    snprintf(widthInput, sizeof(widthInput), "%d", 30);
-                    snprintf(heightInput, sizeof(heightInput), "%d", 16);
-                    snprintf(minesInput, sizeof(minesInput), "%d", 99);
-                }
-                if (GuiButton({(float)originX + 3 * (buttonWidth + 5), (float)buttonY, (float)buttonWidth - 1, 20}, "Extreme")) {
-                    tempGridWidth = 50;
-                    tempGridHeight = 50;
-                    tempNumMines = 300;
-                    snprintf(widthInput, sizeof(widthInput), "%d", 50);
-                    snprintf(heightInput, sizeof(heightInput), "%d", 50);
-                    snprintf(minesInput, sizeof(minesInput), "%d", 300);
-                }
+                    int row = 3;  // Skip 0 = title, 1 = seed toggle
 
-                // --- Width on Row 3 ---
-                GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Width", NULL, &tempGridWidth, 5.0f, 250.0f);
-                if (!widthEdit) snprintf(widthInput, sizeof(widthInput), "%d", (int)tempGridWidth);
-                if (GuiTextBox({(float)originX + 185, (float)GetRowY(row), 65, 20}, widthInput, sizeof(widthInput), widthEdit))
-                    widthEdit = !widthEdit;
-                if (!widthEdit) {
-                    int value = atoi(widthInput);
-                    if (value >= 5 && value <= 10000) tempGridWidth = (float)value;
-                }
-                row++;
+                    // --- Difficulty Presets on Row 2 ---
+                    int buttonWidth = (contentWidth - 14) / 4;
+                    int buttonY = GetRowY(row++);
 
-                // --- Height on Row 4 ---
-                GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Height", NULL, &tempGridHeight, 5.0f, 250.0f);
-                if (!heightEdit) snprintf(heightInput, sizeof(heightInput), "%d", (int)tempGridHeight);
-                if (GuiTextBox({(float)originX + 185, (float)GetRowY(row), 65, 20}, heightInput, sizeof(heightInput), heightEdit))
-                    heightEdit = !heightEdit;
-                if (!heightEdit) {
-                    int value = atoi(heightInput);
-                    if (value >= 5 && value <= 10000) tempGridHeight = (float)value;
-                }
-                row++;
-
-                // --- Mines on Row 5 ---
-                GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Mines", NULL, &tempNumMines, 1.0f, (float)maxMines);
-                if (!minesEdit) snprintf(minesInput, sizeof(minesInput), "%d", (int)tempNumMines);
-                if (GuiTextBox({(float)originX + 185, (float)GetRowY(row), 65, 20}, minesInput, sizeof(minesInput), minesEdit))
-                    minesEdit = !minesEdit;
-                if (!minesEdit) {
-                    int value = atoi(minesInput);
-                    if (value >= 1 && value <= maxMines) tempNumMines = (float)value;
-                }
-                row++;
-
-                // Apply final values
-                gridWidth = (int)(tempGridWidth + 0.5f);
-                gridHeight = (int)(tempGridHeight + 0.5f);
-                numMine = (int)(tempNumMines + 0.5f);
-
-            } else {
-                GuiLabel((Rectangle){originX, originY + 80, 250, 20}, "Seed Input:");
-                GuiTextBox((Rectangle){originX, originY + 100, 250, 30}, seedText, 33, true);
-
-                // Filter out spaces manually
-                int len = strlen(seedText);
-                int writeIndex = 0;
-
-                for (int i = 0; i < len; i++) {
-                    if (isValidBase64Char(seedText[i])) {
-                        seedText[writeIndex++] = seedText[i];
+                    if (GuiButton({(float)originX + 0 * (buttonWidth + 5), (float)buttonY, (float)buttonWidth, 20}, "Easy")) {
+                        tempGridWidth = 9;
+                        tempGridHeight = 9;
+                        tempNumMines = 10;
+                        snprintf(widthInput, sizeof(widthInput), "%d", 9);
+                        snprintf(heightInput, sizeof(heightInput), "%d", 9);
+                        snprintf(minesInput, sizeof(minesInput), "%d", 10);
                     }
+                    if (GuiButton({(float)originX + 1 * (buttonWidth + 5), (float)buttonY, (float)buttonWidth, 20}, "Medium")) {
+                        tempGridWidth = 16;
+                        tempGridHeight = 16;
+                        tempNumMines = 40;
+                        snprintf(widthInput, sizeof(widthInput), "%d", 16);
+                        snprintf(heightInput, sizeof(heightInput), "%d", 16);
+                        snprintf(minesInput, sizeof(minesInput), "%d", 40);
+                    }
+                    if (GuiButton({(float)originX + 2 * (buttonWidth + 5), (float)buttonY, (float)buttonWidth, 20}, "Hard")) {
+                        tempGridWidth = 30;
+                        tempGridHeight = 16;
+                        tempNumMines = 99;
+                        snprintf(widthInput, sizeof(widthInput), "%d", 30);
+                        snprintf(heightInput, sizeof(heightInput), "%d", 16);
+                        snprintf(minesInput, sizeof(minesInput), "%d", 99);
+                    }
+                    if (GuiButton({(float)originX + 3 * (buttonWidth + 5), (float)buttonY, (float)buttonWidth - 1, 20}, "Extreme")) {
+                        tempGridWidth = 50;
+                        tempGridHeight = 50;
+                        tempNumMines = 300;
+                        snprintf(widthInput, sizeof(widthInput), "%d", 50);
+                        snprintf(heightInput, sizeof(heightInput), "%d", 50);
+                        snprintf(minesInput, sizeof(minesInput), "%d", 300);
+                    }
+
+                    // --- Width on Row 3 ---
+                    GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Width", NULL, &tempGridWidth, 5.0f, 250.0f);
+                    if (!widthEdit) snprintf(widthInput, sizeof(widthInput), "%d", (int)tempGridWidth);
+                    if (GuiTextBox({(float)originX + 185, (float)GetRowY(row), 65, 20}, widthInput, sizeof(widthInput), widthEdit))
+                        widthEdit = !widthEdit;
+                    if (!widthEdit) {
+                        int value = atoi(widthInput);
+                        if (value >= 5 && value <= 10000) tempGridWidth = (float)value;
+                    }
+                    row++;
+
+                    // --- Height on Row 4 ---
+                    GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Height", NULL, &tempGridHeight, 5.0f, 250.0f);
+                    if (!heightEdit) snprintf(heightInput, sizeof(heightInput), "%d", (int)tempGridHeight);
+                    if (GuiTextBox({(float)originX + 185, (float)GetRowY(row), 65, 20}, heightInput, sizeof(heightInput), heightEdit))
+                        heightEdit = !heightEdit;
+                    if (!heightEdit) {
+                        int value = atoi(heightInput);
+                        if (value >= 5 && value <= 10000) tempGridHeight = (float)value;
+                    }
+                    row++;
+
+                    // --- Mines on Row 5 ---
+                    GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Mines", NULL, &tempNumMines, 1.0f, (float)maxMines);
+                    if (!minesEdit) snprintf(minesInput, sizeof(minesInput), "%d", (int)tempNumMines);
+                    if (GuiTextBox({(float)originX + 185, (float)GetRowY(row), 65, 20}, minesInput, sizeof(minesInput), minesEdit))
+                        minesEdit = !minesEdit;
+                    if (!minesEdit) {
+                        int value = atoi(minesInput);
+                        if (value >= 1 && value <= maxMines) tempNumMines = (float)value;
+                    }
+                    row++;
+
+                    // Apply final values
+                    gridWidth = (int)(tempGridWidth + 0.5f);
+                    gridHeight = (int)(tempGridHeight + 0.5f);
+                    numMine = (int)(tempNumMines + 0.5f);
+                    break;
                 }
-                seedText[writeIndex] = '\0';  // Null-terminate
+
+                case MenuMode::SEED: {
+                    GuiLabel((Rectangle){originX, originY + 80, 250, 20}, "Seed Input:");
+                    GuiTextBox((Rectangle){originX, originY + 100, 250, 30}, seedText, 33, true);
+
+                    // Filter out spaces manually
+                    int len = strlen(seedText);
+                    int writeIndex = 0;
+
+                    for (int i = 0; i < len; i++) {
+                        if (isValidBase64Char(seedText[i])) {
+                            seedText[writeIndex++] = seedText[i];
+                        }
+                    }
+                    seedText[writeIndex] = '\0';  // Null-terminate
+                    break;
+                }
+
+                case MenuMode::SOLVER: {
+                    GuiLabel((Rectangle){originX, originY + 80, 250, 20}, "solver stuff:");
+                    GuiTextBox((Rectangle){originX, originY + 100, 250, 30}, seedText, 33, true);
+                    break;
+                }
+
+                default: {
+                    GuiLabel((Rectangle){originX, originY + 80, 250, 20}, "how did you get here huh");
+                    break;
+                }
             }
 
             // Confirm button
