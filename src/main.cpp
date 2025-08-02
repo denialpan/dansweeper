@@ -5,6 +5,8 @@
 
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
+#include <sys/stat.h>
+
 #include "headers/globals.h"
 #include "headers/grid.h"
 #include "headers/inputcontroller.h"
@@ -49,6 +51,36 @@ void resetGrid(Grid*& grid, InputController*& ipc) {
     ipc = nullptr;
 }
 
+void EnsureDirectoryExists(const char* path) {
+    mkdir(path);
+}
+
+void SaveCsvPathToIni(const char* path, const char* filename = "resources/config.ini") {
+    EnsureDirectoryExists("resources");
+
+    FILE* file = fopen(filename, "w");
+    if (file) {
+        fprintf(file, "[Solver]\ncsv_path=%s\n", path);
+        fclose(file);
+    }
+}
+
+void LoadCsvPathFromIni(char* buffer, int bufferSize, const char* filename = "resources/config.ini") {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        // File doesn't exist — create it with default path
+        SaveCsvPathToIni(buffer, filename);
+        return;
+    }
+
+    char line[512];
+    while (fgets(line, sizeof(line), file)) {
+        if (sscanf(line, "csv_path=%255[^\n]", buffer) == 1) break;
+    }
+
+    fclose(file);
+}
+
 int main() {
     // resizable vsync window
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
@@ -66,14 +98,23 @@ int main() {
     Grid* currentGrid = nullptr;
     InputController* inputMethodology = nullptr;
     SolverController* solverMethodology = nullptr;
-    GridMetadata metadata;
+    GridMetadata gridMetadata;
 
     render::LoadAssets();
 
-    // initial menu settings
+    static char csvFolderPath[256] = "results";
+    static bool csvPathEdit = false;
+    LoadCsvPathFromIni(csvFolderPath, sizeof(csvFolderPath));
+
+    // initial manual settings
     static int gridWidth = 9;
     static int gridHeight = 9;
     static int numMine = 10;
+
+    // initial solver settings
+    static char boardPreset[256] = "easy";
+    static SolverType solverPreset = SolverType::NONE;
+    static int numBoardsToSolve = 10;
 
     static bool debug = false;
 
@@ -88,7 +129,7 @@ int main() {
             }
 
             int contentWidth = 250;
-            int contentHeight = 290;  // Adjust based on number of elements
+            int contentHeight = 290;
             int screenWidth = GetScreenWidth();
             int screenHeight = GetScreenHeight();
 
@@ -97,7 +138,7 @@ int main() {
 
             static char seedText[33] = "";  // 32-char seed + null terminator
 
-            static bool useSeed = false;  // false = manual, true = seed
+            static bool useSeed = false;
 
             const char* modeLabel = "";
             switch (menuMode) {
@@ -201,6 +242,7 @@ int main() {
                     row++;
 
                     // --- Mines on Row 5 ---
+
                     GuiSliderBar({(float)originX, (float)GetRowY(row), 180, 20}, "Mines", NULL, &tempNumMines, 1.0f, (float)maxMines);
                     if (!minesEdit) snprintf(minesInput, sizeof(minesInput), "%d", (int)tempNumMines);
                     if (GuiTextBox({(float)originX + 185, (float)GetRowY(row), 65, 20}, minesInput, sizeof(minesInput), minesEdit))
@@ -215,6 +257,8 @@ int main() {
                     gridWidth = (int)(tempGridWidth + 0.5f);
                     gridHeight = (int)(tempGridHeight + 0.5f);
                     numMine = (int)(tempNumMines + 0.5f);
+
+                    useSeed = false;
                     break;
                 }
 
@@ -232,12 +276,61 @@ int main() {
                         }
                     }
                     seedText[writeIndex] = '\0';  // Null-terminate
+                    useSeed = true;
                     break;
                 }
 
                 case MenuMode::SOLVER: {
-                    GuiLabel((Rectangle){originX, originY + 80, 250, 20}, "solver stuff:");
-                    GuiTextBox((Rectangle){originX, originY + 100, 250, 30}, seedText, 33, true);
+                    int solverRow = 3;
+                    const int rowHeight = 30;
+                    auto GetRowY = [&](int r) { return originY + r * rowHeight; };
+
+                    static int boardPresetIndex = 0;
+                    static const char* boardPresets = "Easy;Medium;Hard;Expert;Random";
+
+                    static int solverTypeIndex = 0;
+                    static const char* solverTypes = "Basic;BFS+CSP;Probability;Monte Carlo";
+
+                    static char boardsToSolve[8] = "9";
+                    static bool boardsToSolveEdit = false;
+
+                    float tempNumBoardsToSolve = (float)numBoardsToSolve;
+
+                    static char csvPath[256] = "results.csv";
+                    static bool csvEditMode = false;
+
+                    // --- Board Preset ---
+                    GuiLabel({(float)originX, (float)GetRowY(solverRow), 120, 20}, "Board Preset:");
+                    GuiComboBox({(float)originX + 130, (float)GetRowY(solverRow), 120, 20}, boardPresets, &boardPresetIndex);
+                    solverRow++;
+
+                    // --- Solver Type ---
+                    GuiLabel({(float)originX, (float)GetRowY(solverRow), 120, 20}, "Solver Type:");
+                    GuiComboBox({(float)originX + 100, (float)GetRowY(solverRow), 150, 20}, solverTypes, &solverTypeIndex);
+                    solverRow++;
+
+                    // --- Number of Boards to Solve ---
+                    GuiLabel({(float)originX, (float)GetRowY(solverRow), 140, 20}, "# Boards to Solve:");
+                    if (!boardsToSolveEdit) snprintf(boardsToSolve, sizeof(boardsToSolve), "%d", (int)tempNumBoardsToSolve);
+                    if (GuiTextBox({(float)originX + 185, (float)GetRowY(solverRow), 65, 20}, boardsToSolve, sizeof(boardsToSolve), boardsToSolveEdit))
+                        boardsToSolveEdit = !boardsToSolveEdit;
+                    if (!boardsToSolveEdit) {
+                        int value = atoi(boardsToSolve);
+                        if (value >= 1 && value <= 1000) tempNumBoardsToSolve = (float)value;
+                    }
+
+                    solverRow++;
+
+                    // --- CSV Save Path ---
+                    GuiLabel({(float)originX, (float)GetRowY(solverRow), 120, 20}, "Save File:");
+                    if (GuiTextBox({(float)originX + 70, (float)GetRowY(solverRow), 180, 20}, csvFolderPath, sizeof(csvFolderPath), csvPathEdit)) {
+                        csvPathEdit = !csvPathEdit;
+                    }
+                    solverRow++;
+
+                    // apply values
+                    numBoardsToSolve = (int)(tempNumBoardsToSolve + 0.5f);
+
                     break;
                 }
 
@@ -249,11 +342,30 @@ int main() {
 
             // Confirm button
             if (GuiButton((Rectangle){originX, originY + 220, 250, 30}, "Confirm")) {
-                metadata.width = gridWidth;
-                metadata.height = gridHeight;
-                metadata.numMine = numMine;
+                switch (menuMode) {
+                    case MenuMode::MANUAL: {
+                        gridMetadata.width = gridWidth;
+                        gridMetadata.height = gridHeight;
+                        gridMetadata.numMine = numMine;
+                        currentGrid = new Grid(gridMetadata, "", useSeed);
+                        break;
+                    }
 
-                currentGrid = new Grid(metadata, std::string(seedText), useSeed);
+                    case MenuMode::SEED: {
+                        gridMetadata = {};
+                        currentGrid = new Grid(gridMetadata, std::string(seedText), useSeed);
+                        break;
+                    }
+
+                    case MenuMode::SOLVER: {
+                        SaveCsvPathToIni(csvFolderPath);
+                        break;
+                    }
+                    default: {
+                        // explode drew's computer aha
+                    }
+                }
+
                 solverMethodology = new SolverController();
                 solverMethodology->start(currentGrid, SolverType::BRUTE_FORCE_DERN_STYLE);
                 render::CenterCameraOnMap(currentGrid);

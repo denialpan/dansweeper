@@ -57,7 +57,8 @@
                 "args": [
                     "RAYLIB_PATH=C:/raylib/raylib",
                     "PROJECT_NAME=${fileBasenameNoExtension}",
-                    "OBJS=src/*.cpp"
+                    "OBJS=src/*.cpp src/utils/*.cpp src/solver/*.cpp",
+                    "BUILD_MODE=DEBUG"
                 ]
             },
             "osx": {
@@ -91,7 +92,7 @@
             "args": [
                 "RAYLIB_PATH=C:/raylib/raylib",
                 "PROJECT_NAME=dansweeper", // change to desired EXE name
-                "OBJS=src/*.cpp",
+                "OBJS=src/*.cpp src/utils/*.cpp src/solver/*.cpp",
                 "BUILD_MODE=RELEASE",
                 "RAYLIB_LIBTYPE=STATIC" // <-- ensure static link
             ],
