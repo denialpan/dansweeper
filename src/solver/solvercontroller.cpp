@@ -93,3 +93,12 @@ void SolverController::stop() {
 bool SolverController::isFinished() const {
     return currentSolver ? currentSolver->isFinished() : true;
 }
+
+std::vector<std::pair<SolverType, std::string>> SolverController::getPairSolverString() {
+    std::vector<std::pair<SolverType, std::string>> output = {};
+
+    output.push_back({SolverType::BRUTE_FORCE_DERN_STYLE, "brute force dern style"});
+    output.push_back({SolverType::BRUTE_FORCE_DERN_STYLE, "sus"});
+
+    return output;
+}

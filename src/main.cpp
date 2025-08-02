@@ -112,7 +112,7 @@ int main() {
     static int numMine = 10;
 
     // initial solver settings
-    static char boardPreset[256] = "easy";
+    static char boardPresetIndexFinal = 0;
     static SolverType solverPreset = SolverType::NONE;
     static int numBoardsToSolve = 10;
 
@@ -289,7 +289,13 @@ int main() {
                     static const char* boardPresets = "Easy;Medium;Hard;Expert;Random";
 
                     static int solverTypeIndex = 0;
-                    static const char* solverTypes = "Basic;BFS+CSP;Probability;Monte Carlo";
+
+                    std::vector<std::pair<SolverType, std::string>> solverPairs = SolverController::getPairSolverString();
+                    std::string solverComboText;
+                    for (size_t i = 0; i < solverPairs.size(); ++i) {
+                        solverComboText += solverPairs[i].second;
+                        if (i + 1 < solverPairs.size()) solverComboText += ";";
+                    }
 
                     static char boardsToSolve[8] = "9";
                     static bool boardsToSolveEdit = false;
@@ -306,7 +312,7 @@ int main() {
 
                     // --- Solver Type ---
                     GuiLabel({(float)originX, (float)GetRowY(solverRow), 120, 20}, "Solver Type:");
-                    GuiComboBox({(float)originX + 100, (float)GetRowY(solverRow), 150, 20}, solverTypes, &solverTypeIndex);
+                    GuiComboBox({(float)originX + 100, (float)GetRowY(solverRow), 150, 20}, solverComboText.c_str(), &solverTypeIndex);
                     solverRow++;
 
                     // --- Number of Boards to Solve ---
@@ -322,13 +328,15 @@ int main() {
                     solverRow++;
 
                     // --- CSV Save Path ---
-                    GuiLabel({(float)originX, (float)GetRowY(solverRow), 120, 20}, "Save File:");
+                    GuiLabel({(float)originX, (float)GetRowY(solverRow), 120, 20}, "Save .csv:");
                     if (GuiTextBox({(float)originX + 70, (float)GetRowY(solverRow), 180, 20}, csvFolderPath, sizeof(csvFolderPath), csvPathEdit)) {
                         csvPathEdit = !csvPathEdit;
                     }
                     solverRow++;
 
                     // apply values
+                    boardPresetIndexFinal = boardPresetIndex;
+                    solverPreset = solverPairs[solverTypeIndex].first;
                     numBoardsToSolve = (int)(tempNumBoardsToSolve + 0.5f);
 
                     break;

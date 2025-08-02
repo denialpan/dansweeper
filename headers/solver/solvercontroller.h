@@ -22,6 +22,7 @@ class SolverController {
     void step();
     bool isFinished() const;
     void stop();
+    static std::vector<std::pair<SolverType, std::string>> getPairSolverString();
 
    private:
     SolverStepInterface* currentSolver = nullptr;
