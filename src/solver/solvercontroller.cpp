@@ -91,7 +91,7 @@ void SolverController::stop() {
 }
 
 bool SolverController::isFinished() const {
-    return currentSolver ? currentSolver->isFinished() : true;
+    return grid->gameState != GameState::ONGOING;
 }
 
 std::vector<std::pair<SolverType, std::string>> SolverController::getPairSolverString() {

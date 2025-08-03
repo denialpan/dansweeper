@@ -39,6 +39,14 @@ enum class MenuMode {
     SOLVER,
 };
 
+enum class SolverMainThreadState {
+    IDLE,
+    RUNNING,
+    CREATE_BOARD,
+    SOLVE_BOARD,
+    ALL_FINISHED
+};
+
 // helper sanitize text input
 bool isValidBase64Char(char c) {
     return (isalnum(c) || c == '+' || c == '/' || c == '=');
@@ -115,7 +123,9 @@ int main() {
     static char boardPresetIndexFinal = 0;
     static SolverType solverPreset = SolverType::NONE;
     static int numBoardsToSolve = 10;
-
+    static bool useSolver = false;
+    static SolverMainThreadState solverMainThreadState = SolverMainThreadState::IDLE;
+    static int boardsSolved = 0;
     static bool debug = false;
 
     while (!WindowShouldClose()) {
@@ -356,33 +366,86 @@ int main() {
                         gridMetadata.height = gridHeight;
                         gridMetadata.numMine = numMine;
                         currentGrid = new Grid(gridMetadata, "", useSeed);
+                        render::CenterCameraOnMap(currentGrid);
+
                         break;
                     }
 
                     case MenuMode::SEED: {
                         gridMetadata = {};
                         currentGrid = new Grid(gridMetadata, std::string(seedText), useSeed);
+                        render::CenterCameraOnMap(currentGrid);
+
                         break;
                     }
 
                     case MenuMode::SOLVER: {
                         SaveCsvPathToIni(csvFolderPath);
+                        useSolver = true;
                         break;
-                    }
-                    default: {
-                        // explode drew's computer aha
                     }
                 }
 
-                solverMethodology = new SolverController();
-                solverMethodology->start(currentGrid, SolverType::BRUTE_FORCE_DERN_STYLE);
-                render::CenterCameraOnMap(currentGrid);
                 windowState = WindowState::GAME;
             }
+
+        } else if (windowState == WindowState::GAME && useSolver) {
+            switch (solverMainThreadState) {
+                case SolverMainThreadState::IDLE: {
+                    boardsSolved = 0;
+                    solverMainThreadState = SolverMainThreadState::RUNNING;
+                    break;
+                }
+
+                case SolverMainThreadState::RUNNING: {
+                    if (boardsSolved < numBoardsToSolve) {
+                        solverMainThreadState = SolverMainThreadState::CREATE_BOARD;
+                    } else {
+                        solverMainThreadState = SolverMainThreadState::ALL_FINISHED;
+                    }
+                    break;
+                }
+
+                case SolverMainThreadState::CREATE_BOARD: {
+                    GridMetadata solverMetadata;
+                    solverMetadata.height = 10;
+                    solverMetadata.width = 10;
+                    solverMetadata.numMine = 9;
+
+                    currentGrid = new Grid(solverMetadata, "", false);
+                    render::CenterCameraOnMap(currentGrid);
+                    solverMethodology = new SolverController();
+                    solverMethodology->start(currentGrid, SolverType::BRUTE_FORCE_DERN_STYLE);
+                    solverMainThreadState = SolverMainThreadState::SOLVE_BOARD;
+                    break;
+                }
+                case SolverMainThreadState::SOLVE_BOARD: {
+                    DrawTextEx(customFont, std::format("board #{}", boardsSolved + 1).c_str(), {10, 10}, 39, 1, WHITE);
+                    if (solverMethodology->isFinished()) {
+                        boardsSolved++;
+                        solverMainThreadState = SolverMainThreadState::RUNNING;
+                    } else {
+                        solverMethodology->step();
+                    }
+                    break;
+                }
+                case SolverMainThreadState::ALL_FINISHED: {
+                    std::cout << std::format("boards solved: {}\n", boardsSolved);
+                    solverMainThreadState = SolverMainThreadState::IDLE;
+                    solverMethodology->stop();
+                    delete solverMethodology;
+                    solverMethodology = nullptr;
+                    windowState = WindowState::MENU;
+                    break;
+                }
+            }
+
+            render::DrawBoard(currentGrid, useSolver);
+
         } else if (windowState == WindowState::GAME || windowState == WindowState::PAUSE) {
             if (windowState != WindowState::PAUSE) {
                 inputMethodology = new InputController(currentGrid);
-                render::DrawBoard(currentGrid);
+                render::DrawBoard(currentGrid, useSolver);
                 inputMethodology->handleManualInput();
             } else {
                 // pause implemented this way to prevent "pause board examination"

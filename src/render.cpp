@@ -49,7 +49,7 @@ void CenterCameraOnMap(const Grid* grid) {
     camera.rotation = 0.0f;
 }
 
-void DrawBoard(const Grid* grid) {
+void DrawBoard(const Grid* grid, bool useSolver) {
     if (!grid) {
         return;
     };
@@ -84,47 +84,49 @@ void DrawBoard(const Grid* grid) {
 
     EndMode2D();
 
-    // draw endscreen once, allow post game examination
-    if ((grid->gameState == GameState::WON || grid->gameState == GameState::LOST) &&
-        previousWindowState == GameState::ONGOING) {
-        showEndscreen = true;
-    }
-
-    previousWindowState = grid->gameState;
-
-    if (showEndscreen) {
-        int screenWidth = GetScreenWidth();
-        int screenHeight = GetScreenHeight();
-
-        int boxWidth = 350;
-        int boxHeight = 280;
-        int boxX = (screenWidth - boxWidth) / 2;
-        int boxY = (screenHeight - boxHeight) / 2;
-        Rectangle windowBounds = {(float)boxX, (float)boxY, (float)boxWidth, (float)boxHeight};
-
-        const char* title = grid->gameState == GameState::WON ? "You Win!" : "Game Over!";
-        if (GuiWindowBox(windowBounds, title)) {
-            showEndscreen = false;
-            return;
+    if (!useSolver) {
+        // draw endscreen once, allow post game examination
+        if ((grid->gameState == GameState::WON || grid->gameState == GameState::LOST) &&
+            previousWindowState == GameState::ONGOING) {
+            showEndscreen = true;
         }
 
-        // Stat Labels
-        int labelX = boxX + 20;
-        int labelY = boxY + 40;
-        int spacing = 22;
+        previousWindowState = grid->gameState;
 
-        GuiLabel((Rectangle){labelX, labelY + spacing * 0, 300, 20}, TextFormat("Time: %.3f sec", grid->endStats.timeElapsed));
-        GuiLabel((Rectangle){labelX, labelY + spacing * 1, 300, 20}, TextFormat("Revealed Tiles: %d", grid->endStats.numRevealed));
-        GuiLabel((Rectangle){labelX, labelY + spacing * 2, 300, 20}, TextFormat("Flags Placed: %d", grid->endStats.numFlagged));
-        GuiLabel((Rectangle){labelX, labelY + spacing * 3, 300, 20}, TextFormat("Bombs Left: %d", grid->endStats.bombsLeft));
-        GuiLabel((Rectangle){labelX, labelY + spacing * 4, 300, 20}, TextFormat("Board Size: %d x %d", grid->endStats.width, grid->endStats.height));
-        GuiLabel((Rectangle){labelX, labelY + spacing * 5, 300, 20}, TextFormat("Seed: %s", grid->endStats.seed32.c_str()));
+        if (showEndscreen) {
+            int screenWidth = GetScreenWidth();
+            int screenHeight = GetScreenHeight();
 
-        // Menu Button
-        Rectangle quitBtn = {boxX + boxWidth / 2 - 50, boxY + boxHeight - 40, 100, 30};
-        if (GuiButton(quitBtn, "Menu")) {
-            windowState = WindowState::MENU;
-            showEndscreen = false;
+            int boxWidth = 350;
+            int boxHeight = 280;
+            int boxX = (screenWidth - boxWidth) / 2;
+            int boxY = (screenHeight - boxHeight) / 2;
+            Rectangle windowBounds = {(float)boxX, (float)boxY, (float)boxWidth, (float)boxHeight};
+
+            const char* title = grid->gameState == GameState::WON ? "You Win!" : "Game Over!";
+            if (GuiWindowBox(windowBounds, title)) {
+                showEndscreen = false;
+                return;
+            }
+
+            // Stat Labels
+            int labelX = boxX + 20;
+            int labelY = boxY + 40;
+            int spacing = 22;
+
+            GuiLabel((Rectangle){labelX, labelY + spacing * 0, 300, 20}, TextFormat("Time: %.3f sec", grid->endStats.timeElapsed));
+            GuiLabel((Rectangle){labelX, labelY + spacing * 1, 300, 20}, TextFormat("Revealed Tiles: %d", grid->endStats.numRevealed));
+            GuiLabel((Rectangle){labelX, labelY + spacing * 2, 300, 20}, TextFormat("Flags Placed: %d", grid->endStats.numFlagged));
+            GuiLabel((Rectangle){labelX, labelY + spacing * 3, 300, 20}, TextFormat("Bombs Left: %d", grid->endStats.bombsLeft));
+            GuiLabel((Rectangle){labelX, labelY + spacing * 4, 300, 20}, TextFormat("Board Size: %d x %d", grid->endStats.width, grid->endStats.height));
+            GuiLabel((Rectangle){labelX, labelY + spacing * 5, 300, 20}, TextFormat("Seed: %s", grid->endStats.seed32.c_str()));
+
+            // Menu Button
+            Rectangle quitBtn = {boxX + boxWidth / 2 - 50, boxY + boxHeight - 40, 100, 30};
+            if (GuiButton(quitBtn, "Menu")) {
+                windowState = WindowState::MENU;
+                showEndscreen = false;
+            }
         }
     }
 }
