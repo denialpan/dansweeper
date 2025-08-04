@@ -35,5 +35,8 @@ class SolverController {
     std::mutex stepMutex;
     std::condition_variable stepCV;
 
+    std::condition_variable stepDoneCV;
+    bool stepDone = false;
+
     void solverThreadLoop();
 };

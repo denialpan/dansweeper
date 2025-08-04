@@ -61,17 +61,25 @@ void SolverController::step() {
 
 void SolverController::solverThreadLoop() {
     while (running && currentSolver && !currentSolver->isFinished()) {
-        std::unique_lock<std::mutex> lock(stepMutex);
-        stepCV.wait(lock, [&]() {
-            return stepRequested || !running;
-        });
-
-        if (!running) {
-            break;
-        }
+        std::unique_lock<std::mutex> lk(stepMutex);
+        stepCV.wait(lk, [&] { return stepRequested || !running; });
+        if (!running) break;
 
         stepRequested = false;
+        lk.unlock();  // do work outside the lock
+
+        auto previousState = grid->cells;
+
         currentSolver->step();
+        lk.lock();
+
+        stepDone = true;  // signal completion of one step
+        lk.unlock();
+        stepDoneCV.notify_one();
+
+        if (previousState == grid->cells) {
+            grid->gameState = GameState::LOST;
+        }
     }
 }
 

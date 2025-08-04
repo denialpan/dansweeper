@@ -493,6 +493,7 @@ int main() {
                     delete solverMethodology;
                     solverMethodology = nullptr;
                     windowState = WindowState::MENU;
+                    useSolver = false;
                     break;
                 }
             }

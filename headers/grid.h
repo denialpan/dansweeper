@@ -24,6 +24,8 @@ struct Cell {
     bool revealed = false;
     bool flagged = false;
     int adjacentMines = 0;
+
+    bool operator==(const Cell&) const = default;
 };
 
 // what defines a board and its properties
