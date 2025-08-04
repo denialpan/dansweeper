@@ -2,6 +2,7 @@
 #include <format>
 #include <iomanip>
 #include <iostream>
+#include <random>
 
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
@@ -46,6 +47,32 @@ enum class SolverMainThreadState {
     SOLVE_BOARD,
     ALL_FINISHED
 };
+
+// Function to generate a random string of a given length using Base64 characters
+std::string generateRandomBase64String(int length) {
+    // The Base64 character set
+    const std::string base64_chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+
+    // Use a random device to seed the random number generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    // Create a distribution for the indices of the base64_chars string
+    std::uniform_int_distribution<> distrib(0, base64_chars.size() - 1);
+
+    std::string random_string;
+    random_string.reserve(length);  // Reserve memory for efficiency
+
+    // Generate random characters and append to the string
+    for (int i = 0; i < length; ++i) {
+        random_string += base64_chars[distrib(gen)];
+    }
+
+    return random_string;
+}
 
 // helper sanitize text input
 bool isValidBase64Char(char c) {
@@ -408,11 +435,41 @@ int main() {
 
                 case SolverMainThreadState::CREATE_BOARD: {
                     GridMetadata solverMetadata;
-                    solverMetadata.height = 10;
-                    solverMetadata.width = 10;
-                    solverMetadata.numMine = 9;
+                    std::string seed = "";
+                    bool useSeed = false;
+                    switch (boardPresetIndexFinal) {
+                        case 0: {
+                            solverMetadata.height = 9;
+                            solverMetadata.width = 9;
+                            solverMetadata.numMine = 10;
+                            break;
+                        }
+                        case 1: {
+                            solverMetadata.height = 16;
+                            solverMetadata.width = 16;
+                            solverMetadata.numMine = 40;
+                            break;
+                        }
+                        case 2: {
+                            solverMetadata.height = 16;
+                            solverMetadata.width = 30;
+                            solverMetadata.numMine = 99;
+                            break;
+                        }
+                        case 3: {
+                            solverMetadata.height = 50;
+                            solverMetadata.width = 50;
+                            solverMetadata.numMine = 300;
+                            break;
+                        }
 
-                    currentGrid = new Grid(solverMetadata, "", false);
+                        case 4: {
+                            seed = generateRandomBase64String(16);
+                            useSeed = true;
+                        }
+                    }
+
+                    currentGrid = new Grid(solverMetadata, seed, useSeed);
                     render::CenterCameraOnMap(currentGrid);
                     solverMethodology = new SolverController();
                     solverMethodology->start(currentGrid, SolverType::BRUTE_FORCE_DERN_STYLE);
@@ -486,9 +543,9 @@ int main() {
                 windowState = (windowState == WindowState::PAUSE) ? WindowState::GAME : WindowState::PAUSE;
             }
 
-            if (IsKeyPressed(KEY_S)) {
-                solverMethodology->step();
-            }
+            // if (IsKeyPressed(KEY_S)) {
+            //     solverMethodology->step();
+            // }
 
             currentGrid->updateTimer();
         };
