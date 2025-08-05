@@ -474,6 +474,8 @@ int main() {
                     solverMethodology = new SolverController();
                     solverMethodology->start(currentGrid, SolverType::BRUTE_FORCE_DERN_STYLE);
                     solverMainThreadState = SolverMainThreadState::SOLVE_BOARD;
+
+                    inputMethodology = new InputController(currentGrid);
                     break;
                 }
                 case SolverMainThreadState::SOLVE_BOARD: {
@@ -484,6 +486,9 @@ int main() {
                     } else {
                         solverMethodology->step();
                     }
+                    currentGrid->updateTimer();
+                    inputMethodology->handleManualInput();
+
                     break;
                 }
                 case SolverMainThreadState::ALL_FINISHED: {
@@ -499,6 +504,15 @@ int main() {
             }
 
             render::DrawBoard(currentGrid, useSolver);
+            if (IsKeyPressed(KEY_ESCAPE)) {
+                solverMainThreadState = SolverMainThreadState::IDLE;
+                solverMethodology->stop();
+                delete solverMethodology;
+                solverMethodology = nullptr;
+                windowState = WindowState::MENU;
+                useSolver = false;
+                windowState = (windowState == WindowState::PAUSE) ? WindowState::GAME : WindowState::PAUSE;
+            }
 
         } else if (windowState == WindowState::GAME || windowState == WindowState::PAUSE) {
             if (windowState != WindowState::PAUSE) {
@@ -544,10 +558,6 @@ int main() {
                 windowState = (windowState == WindowState::PAUSE) ? WindowState::GAME : WindowState::PAUSE;
             }
 
-            // if (IsKeyPressed(KEY_S)) {
-            //     solverMethodology->step();
-            // }
-
             currentGrid->updateTimer();
         };
 
@@ -561,21 +571,22 @@ int main() {
             DrawTextEx(customFont, fpsText.c_str(), {10, 10}, 13, 1, WHITE);
             DrawTextEx(customFont, std::format("window state: {}", std::string(WindowStateToString(windowState))).c_str(), {10, 25}, 13, 1, WHITE);
 
-            if (currentGrid && inputMethodology) {
+            if (currentGrid) {
                 DrawTextEx(customFont, "grid: exists", {10, 40}, 13, 1, WHITE);
-                GridCoordinates coords = inputMethodology->handleHoverCursor(render::GetCamera());
-                DrawTextEx(customFont, std::format("(x, y): {}, {}", coords.x, coords.y).c_str(), {10, 55}, 13, 1, WHITE);
+                if (inputMethodology) {
+                    GridCoordinates coords = inputMethodology->handleHoverCursor(render::GetCamera());
+                    DrawTextEx(customFont, std::format("(x, y): {}, {}", coords.x, coords.y).c_str(), {10, 55}, 13, 1, WHITE);
+                    if (!(coords.x < 0 || coords.x >= currentGrid->width || coords.y < 0 || coords.y >= currentGrid->height)) {
+                        Cell& cellPropertyState = currentGrid->cells[coords.y][coords.x];
+                        DrawTextEx(customFont, std::format("cell property state: {}, {}", cellPropertyState.flagged, cellPropertyState.revealed).c_str(), {10, 160}, 13, 1, WHITE);
+                    }
+                }
                 DrawTextEx(customFont, std::format("seed: {}", currentGrid->seed32).c_str(), {10, 70}, 13, 1, WHITE);
                 DrawTextEx(customFont, std::format("prng: {}", currentGrid->prngSeed).c_str(), {10, 85}, 13, 1, WHITE);
                 DrawTextEx(customFont, std::format("dims: {} x {}", currentGrid->width, currentGrid->height).c_str(), {10, 100}, 13, 1, WHITE);
                 DrawTextEx(customFont, std::format("mine: {}", currentGrid->numMine).c_str(), {10, 115}, 13, 1, WHITE);
                 DrawTextEx(customFont, std::format("safe: {}, {}", currentGrid->safeX, currentGrid->safeY).c_str(), {10, 130}, 13, 1, WHITE);
                 DrawTextEx(customFont, std::format("time: {}", currentGrid->timeElapsed).c_str(), {10, 145}, 13, 1, WHITE);
-
-                if (!(coords.x < 0 || coords.x >= currentGrid->width || coords.y < 0 || coords.y >= currentGrid->height)) {
-                    Cell& cellPropertyState = currentGrid->cells[coords.y][coords.x];
-                    DrawTextEx(customFont, std::format("cell property state: {}, {}", cellPropertyState.flagged, cellPropertyState.revealed).c_str(), {10, 160}, 13, 1, WHITE);
-                }
             }
         }
         EndDrawing();
