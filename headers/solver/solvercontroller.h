@@ -13,6 +13,18 @@ enum class SolverType {
     BRUTE_FORCE_DERN_STYLE,
 };
 
+struct SolverStats {
+    SolverType solverType;
+    int iterations;
+    int successful;
+    int failure;
+    int unsolvableSkipped;
+    float successRatio;
+    float successTimeAverage;
+    int stepsAverage;
+    int gridAccessesAverage;
+};
+
 class SolverController {
    public:
     SolverController();
