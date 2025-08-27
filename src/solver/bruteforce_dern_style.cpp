@@ -13,6 +13,7 @@
 BruteForceDernStyle::BruteForceDernStyle(Grid* grid)
     : grid(grid) {
     revealedNumberTiles.clear();
+    visited.clear();
     grid->reveal(grid->width / 2, grid->height / 2);
 }
 
@@ -41,6 +42,10 @@ void BruteForceDernStyle::step() {
         }
 
         for (std::pair<int, int> revealedNumberTile : revealedNumberTiles) {
+            if (visited.contains(revealedNumberTile)) {
+                continue;
+            }
+
             auto [x, y] = revealedNumberTile;
             std::vector<std::pair<int, int>> neighbors = getNeighbors(x, y);
             Cell cellRevealedProperties = grid->getCellProperties(x, y);
@@ -71,8 +76,13 @@ void BruteForceDernStyle::step() {
                 }
             }
 
-            std::cout << std::format("flagged: {}, revealed: {} \n", flaggedNeighbors, unrevealedNeighbors);
+            std::cout << std::format("flagged: {}, unrevealed: {} \n", flaggedNeighbors, unrevealedNeighbors);
             std::cout << std::format("revealed adjacency: {} \n", cellRevealedProperties.adjacentMines);
+
+            if (unrevealedNeighbors == flaggedNeighbors) {
+                // only valid tiles left are flagged
+                visited.insert({x, y});
+            }
 
             if (flaggedNeighbors == cellRevealedProperties.adjacentMines) {
                 // unnecessary chord again if all thats around is flagged == unrevealed

@@ -106,7 +106,6 @@ std::vector<std::pair<SolverType, std::string>> SolverController::getPairSolverS
     std::vector<std::pair<SolverType, std::string>> output = {};
 
     output.push_back({SolverType::BRUTE_FORCE_DERN_STYLE, "brute force dern style"});
-    output.push_back({SolverType::BRUTE_FORCE_DERN_STYLE, "sus"});
 
     return output;
 }

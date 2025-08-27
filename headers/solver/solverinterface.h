@@ -5,6 +5,7 @@ class SolverStepInterface {
    public:
     Grid* grid;
     int steps = 0;
+
     virtual ~SolverStepInterface() = default;
     virtual void step() = 0;
     virtual bool isFinished() const = 0;
