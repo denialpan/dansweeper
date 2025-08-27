@@ -479,7 +479,7 @@ int main() {
                     break;
                 }
                 case SolverMainThreadState::SOLVE_BOARD: {
-                    DrawTextEx(customFont, std::format("board #{}", boardsSolved + 1).c_str(), {10, 10}, 39, 1, WHITE);
+                    DrawTextEx(customFont, std::format("board #{}", boardsSolved + 1).c_str(), {10, (float)GetScreenHeight() - 45}, 39, 1, WHITE);
                     if (solverMethodology->isFinished()) {
                         boardsSolved++;
                         solverMainThreadState = SolverMainThreadState::RUNNING;
