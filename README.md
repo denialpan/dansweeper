@@ -1,24 +1,47 @@
 ## dansweeper
 
-beta state experimental minesweeper intended for testing various solver implementations
+beta state experimental minesweeper initially intended for testing various solver implementations, but have deviated to release as a just a game for players. Future solver implementations will be maintained in separate repository.
 
 ### features
+
 ![image](https://github.com/user-attachments/assets/0fa369c5-a810-47c6-aabc-21447ffefd7a)
 
 texture credit: https://github.com/Minesweeper-World/MS-Texture
 
-from a user gameplay standpoint, this game has:
+---
+
+#### this game features:
+
 - custom 5x5 to 250x250 board dimensions and presets
 - deterministic seed hashing
-- safe first click
+- safe first click _(seeded input generation does not use first click for replayability)_
 - chording
 - endgame stats with millisecond timer
 - panning and pixel perfect zooming (no texture blurring)
 
-some maybe todo:
+#### controls:
+
+- `left mouse` - reveal tile
+- `right mouse` - flag tile
+- `middle mouse` - chord
+- `middle mouse drag` - pan grid around window
+- `middle mouse scroll` - zoom
+  _note: board seed is automatically copied to clipboard when clicking_
+
+---
+
+#### download:
+
+https://github.com/denialpan/dansweeper/releases
+
+---
+
+#### some maybe todo or future ideas:
+
 - control rebinding
 - demo playback
 - clean up ui
 
-## run
-f5 in vscode
+#### building or modifying
+
+f5 in vscode. there was a starter template that i built this off that had `tasks.json` properly set up. elsewhere in other IDEs im not too sure.
