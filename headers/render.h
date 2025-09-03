@@ -9,7 +9,7 @@
 namespace render {
 void LoadAssets();
 void UnloadAssets();
-void DrawBoard(const Grid* grid, bool useSolver);
+void DrawBoard(const Grid* grid);
 
 Camera2D& GetCamera();
 void CenterCameraOnMap(const Grid* grid);

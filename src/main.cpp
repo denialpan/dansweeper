@@ -6,14 +6,12 @@
 
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
-#include <sys/stat.h>
 
 #include "headers/globals.h"
 #include "headers/grid.h"
 #include "headers/inputcontroller.h"
 #include "headers/raygui.h"
 #include "headers/render.h"
-#include "headers/solver/solvercontroller.h"
 
 using namespace std;
 
@@ -37,42 +35,7 @@ const char* WindowStateToString(WindowState state) {
 enum class MenuMode {
     MANUAL,
     SEED,
-    SOLVER,
 };
-
-enum class SolverMainThreadState {
-    IDLE,
-    RUNNING,
-    CREATE_BOARD,
-    SOLVE_BOARD,
-    ALL_FINISHED
-};
-
-// Function to generate a random string of a given length using Base64 characters
-std::string generateRandomBase64String(int length) {
-    // The Base64 character set
-    const std::string base64_chars =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz"
-        "0123456789+/";
-
-    // Use a random device to seed the random number generator
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
-    // Create a distribution for the indices of the base64_chars string
-    std::uniform_int_distribution<> distrib(0, base64_chars.size() - 1);
-
-    std::string random_string;
-    random_string.reserve(length);  // Reserve memory for efficiency
-
-    // Generate random characters and append to the string
-    for (int i = 0; i < length; ++i) {
-        random_string += base64_chars[distrib(gen)];
-    }
-
-    return random_string;
-}
 
 // helper sanitize text input
 bool isValidBase64Char(char c) {
@@ -86,44 +49,12 @@ void resetGrid(Grid*& grid, InputController*& ipc) {
     ipc = nullptr;
 }
 
-void EnsureDirectoryExists(const char* path) {
-    mkdir(path);
-}
-
-void SaveCsvPathToIni(const char* path, const char* filename = "resources/config.ini") {
-    EnsureDirectoryExists("resources");
-
-    FILE* file = fopen(filename, "w");
-    if (file) {
-        fprintf(file, "[Solver]\ncsv_path=%s\n", path);
-        fclose(file);
-    }
-}
-
-void LoadCsvPathFromIni(char* buffer, int bufferSize, const char* filename = "resources/config.ini") {
-    FILE* file = fopen(filename, "r");
-    if (!file) {
-        // File doesn't exist — create it with default path
-        SaveCsvPathToIni(buffer, filename);
-        return;
-    }
-
-    char line[512];
-    while (fgets(line, sizeof(line), file)) {
-        if (sscanf(line, "csv_path=%255[^\n]", buffer) == 1) break;
-    }
-
-    fclose(file);
-}
-
 int main() {
-    // resizable vsync window
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+        SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     SetConfigFlags(FLAG_VSYNC_HINT);
     InitWindow(500, 400, "dansweeper");
     SetWindowMinSize(500, 400);
     SetExitKey(KEY_NULL);
-    SetTargetFPS(0);
 
     GuiLoadStyle("styles/genesis/style_genesis.rgs");
     Font customFont = LoadFontEx("resources/ProggyClean.ttf", 13, 0, 250);
@@ -132,28 +63,15 @@ int main() {
     static MenuMode menuMode = MenuMode::MANUAL;
     Grid* currentGrid = nullptr;
     InputController* inputMethodology = nullptr;
-    SolverController* solverMethodology = nullptr;
     GridMetadata gridMetadata;
 
     render::LoadAssets();
-
-    static char csvFolderPath[256] = "results";
-    static bool csvPathEdit = false;
-    LoadCsvPathFromIni(csvFolderPath, sizeof(csvFolderPath));
+    static bool debug = false;
 
     // initial manual settings
     static int gridWidth = 9;
     static int gridHeight = 9;
     static int numMine = 10;
-
-    // initial solver settings
-    static char boardPresetIndexFinal = 0;
-    static SolverType solverPreset = SolverType::NONE;
-    static int numBoardsToSolve = 10;
-    static bool useSolver = false;
-    static SolverMainThreadState solverMainThreadState = SolverMainThreadState::IDLE;
-    static int boardsSolved = 0;
-    static bool debug = false;
 
     while (!WindowShouldClose()) {
         BeginDrawing();
@@ -185,16 +103,13 @@ int main() {
                 case MenuMode::SEED:
                     modeLabel = "Seed";
                     break;
-                case MenuMode::SOLVER:
-                    modeLabel = "Solver";
-                    break;
             }
 
-            GuiLabel((Rectangle){originX, originY, 250, 20}, "dansweeper");
+            GuiLabel((Rectangle){originX, originY, 250, 20}, "dansweeper - made by @denialpan on GH");
 
-            // cycle toggle between 3
+            // cycle toggle between 2
             if (GuiButton((Rectangle){originX, originY + 30, 250, 30}, modeLabel)) {
-                menuMode = static_cast<MenuMode>(((static_cast<int>(menuMode) + 1)) % 3);
+                menuMode = static_cast<MenuMode>(((static_cast<int>(menuMode) + 1)) % 2);
             }
 
             switch (menuMode) {
@@ -316,73 +231,6 @@ int main() {
                     useSeed = true;
                     break;
                 }
-
-                case MenuMode::SOLVER: {
-                    int solverRow = 3;
-                    const int rowHeight = 30;
-                    auto GetRowY = [&](int r) { return originY + r * rowHeight; };
-
-                    static int boardPresetIndex = 0;
-                    static const char* boardPresets = "Easy;Medium;Hard;Expert;Random";
-
-                    static int solverTypeIndex = 0;
-
-                    std::vector<std::pair<SolverType, std::string>> solverPairs = SolverController::getPairSolverString();
-                    std::string solverComboText;
-                    for (size_t i = 0; i < solverPairs.size(); ++i) {
-                        solverComboText += solverPairs[i].second;
-                        if (i + 1 < solverPairs.size()) solverComboText += ";";
-                    }
-
-                    static char boardsToSolve[8] = "9";
-                    static bool boardsToSolveEdit = false;
-
-                    float tempNumBoardsToSolve = (float)numBoardsToSolve;
-
-                    static char csvPath[256] = "results.csv";
-                    static bool csvEditMode = false;
-
-                    // --- Board Preset ---
-                    GuiLabel({(float)originX, (float)GetRowY(solverRow), 120, 20}, "Board Preset:");
-                    GuiComboBox({(float)originX + 130, (float)GetRowY(solverRow), 120, 20}, boardPresets, &boardPresetIndex);
-                    solverRow++;
-
-                    // --- Solver Type ---
-                    GuiLabel({(float)originX, (float)GetRowY(solverRow), 120, 20}, "Solver Type:");
-                    GuiComboBox({(float)originX + 100, (float)GetRowY(solverRow), 150, 20}, solverComboText.c_str(), &solverTypeIndex);
-                    solverRow++;
-
-                    // --- Number of Boards to Solve ---
-                    GuiLabel({(float)originX, (float)GetRowY(solverRow), 140, 20}, "# Boards to Solve:");
-                    if (!boardsToSolveEdit) snprintf(boardsToSolve, sizeof(boardsToSolve), "%d", (int)tempNumBoardsToSolve);
-                    if (GuiTextBox({(float)originX + 185, (float)GetRowY(solverRow), 65, 20}, boardsToSolve, sizeof(boardsToSolve), boardsToSolveEdit))
-                        boardsToSolveEdit = !boardsToSolveEdit;
-                    if (!boardsToSolveEdit) {
-                        int value = atoi(boardsToSolve);
-                        if (value >= 1 && value <= 1000) tempNumBoardsToSolve = (float)value;
-                    }
-
-                    solverRow++;
-
-                    // --- CSV Save Path ---
-                    GuiLabel({(float)originX, (float)GetRowY(solverRow), 120, 20}, "Save .csv:");
-                    if (GuiTextBox({(float)originX + 70, (float)GetRowY(solverRow), 180, 20}, csvFolderPath, sizeof(csvFolderPath), csvPathEdit)) {
-                        csvPathEdit = !csvPathEdit;
-                    }
-                    solverRow++;
-
-                    // apply values
-                    boardPresetIndexFinal = boardPresetIndex;
-                    solverPreset = solverPairs[solverTypeIndex].first;
-                    numBoardsToSolve = (int)(tempNumBoardsToSolve + 0.5f);
-
-                    break;
-                }
-
-                default: {
-                    GuiLabel((Rectangle){originX, originY + 80, 250, 20}, "how did you get here huh");
-                    break;
-                }
             }
 
             // Confirm button
@@ -405,119 +253,15 @@ int main() {
 
                         break;
                     }
-
-                    case MenuMode::SOLVER: {
-                        SaveCsvPathToIni(csvFolderPath);
-                        useSolver = true;
-                        break;
-                    }
                 }
 
                 windowState = WindowState::GAME;
             }
 
-        } else if (windowState == WindowState::GAME && useSolver) {
-            switch (solverMainThreadState) {
-                case SolverMainThreadState::IDLE: {
-                    boardsSolved = 0;
-                    solverMainThreadState = SolverMainThreadState::RUNNING;
-                    break;
-                }
-
-                case SolverMainThreadState::RUNNING: {
-                    if (boardsSolved < numBoardsToSolve) {
-                        solverMainThreadState = SolverMainThreadState::CREATE_BOARD;
-                    } else {
-                        solverMainThreadState = SolverMainThreadState::ALL_FINISHED;
-                    }
-                    break;
-                }
-
-                case SolverMainThreadState::CREATE_BOARD: {
-                    GridMetadata solverMetadata;
-                    std::string seed = "";
-                    bool useSeed = false;
-                    switch (boardPresetIndexFinal) {
-                        case 0: {
-                            solverMetadata.height = 9;
-                            solverMetadata.width = 9;
-                            solverMetadata.numMine = 10;
-                            break;
-                        }
-                        case 1: {
-                            solverMetadata.height = 16;
-                            solverMetadata.width = 16;
-                            solverMetadata.numMine = 40;
-                            break;
-                        }
-                        case 2: {
-                            solverMetadata.height = 16;
-                            solverMetadata.width = 30;
-                            solverMetadata.numMine = 99;
-                            break;
-                        }
-                        case 3: {
-                            solverMetadata.height = 50;
-                            solverMetadata.width = 50;
-                            solverMetadata.numMine = 300;
-                            break;
-                        }
-
-                        case 4: {
-                            seed = generateRandomBase64String(16);
-                            useSeed = true;
-                        }
-                    }
-
-                    currentGrid = new Grid(solverMetadata, seed, useSeed);
-                    render::CenterCameraOnMap(currentGrid);
-                    solverMethodology = new SolverController();
-                    solverMethodology->start(currentGrid, SolverType::BRUTE_FORCE_DERN_STYLE);
-                    solverMainThreadState = SolverMainThreadState::SOLVE_BOARD;
-
-                    inputMethodology = new InputController(currentGrid);
-                    break;
-                }
-                case SolverMainThreadState::SOLVE_BOARD: {
-                    DrawTextEx(customFont, std::format("board #{}", boardsSolved + 1).c_str(), {10, (float)GetScreenHeight() - 45}, 39, 1, WHITE);
-                    if (solverMethodology->isFinished()) {
-                        boardsSolved++;
-                        solverMainThreadState = SolverMainThreadState::RUNNING;
-                    } else {
-                        solverMethodology->step();
-                    }
-                    currentGrid->updateTimer();
-                    inputMethodology->handleManualInput();
-
-                    break;
-                }
-                case SolverMainThreadState::ALL_FINISHED: {
-                    std::cout << std::format("boards solved: {}\n", boardsSolved);
-                    solverMainThreadState = SolverMainThreadState::IDLE;
-                    solverMethodology->stop();
-                    delete solverMethodology;
-                    solverMethodology = nullptr;
-                    windowState = WindowState::MENU;
-                    useSolver = false;
-                    break;
-                }
-            }
-
-            render::DrawBoard(currentGrid, useSolver);
-            if (IsKeyPressed(KEY_ESCAPE)) {
-                solverMainThreadState = SolverMainThreadState::IDLE;
-                solverMethodology->stop();
-                delete solverMethodology;
-                solverMethodology = nullptr;
-                windowState = WindowState::MENU;
-                useSolver = false;
-                windowState = (windowState == WindowState::PAUSE) ? WindowState::GAME : WindowState::PAUSE;
-            }
-
         } else if (windowState == WindowState::GAME || windowState == WindowState::PAUSE) {
             if (windowState != WindowState::PAUSE) {
                 inputMethodology = new InputController(currentGrid);
-                render::DrawBoard(currentGrid, useSolver);
+                render::DrawBoard(currentGrid);
                 inputMethodology->handleManualInput();
             } else {
                 // pause implemented this way to prevent "pause board examination"
@@ -578,7 +322,6 @@ int main() {
                     DrawTextEx(customFont, std::format("(x, y): {}, {}", coords.x, coords.y).c_str(), {10, 55}, 13, 1, WHITE);
                     if (!(coords.x < 0 || coords.x >= currentGrid->width || coords.y < 0 || coords.y >= currentGrid->height)) {
                         Cell& cellPropertyState = currentGrid->cells[coords.y][coords.x];
-                        DrawTextEx(customFont, std::format("cell property state: {}, {}", cellPropertyState.flagged, cellPropertyState.revealed).c_str(), {10, 160}, 13, 1, WHITE);
                     }
                 }
                 DrawTextEx(customFont, std::format("seed: {}", currentGrid->seed32).c_str(), {10, 70}, 13, 1, WHITE);
