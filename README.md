@@ -26,6 +26,7 @@ texture credit: https://github.com/Minesweeper-World/MS-Texture
 - `middle mouse` - chord
 - `middle mouse drag` - pan grid around window
 - `middle mouse scroll` - zoom
+- `f3` - debug ahh minecraft screen
   _note: board seed is automatically copied to clipboard when clicking_
 
 #### showcase:
