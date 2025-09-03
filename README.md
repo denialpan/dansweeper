@@ -28,6 +28,15 @@ texture credit: https://github.com/Minesweeper-World/MS-Texture
 - `middle mouse scroll` - zoom
   _note: board seed is automatically copied to clipboard when clicking_
 
+#### showcase:
+
+##### basic gameplay
+https://github.com/user-attachments/assets/efa116e9-f89b-4106-a741-9f2f353f57a9
+##### extreme board generation
+https://github.com/user-attachments/assets/b593123b-cc41-415e-aedb-1b8697e8611c
+##### first click guaranteed, then not in seed
+https://github.com/user-attachments/assets/731caf56-2ff0-424a-8f4f-6ac0402d2a4c
+
 ---
 
 #### download:
