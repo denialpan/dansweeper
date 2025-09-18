@@ -1,6 +1,6 @@
 ## dansweeper
 
-beta state experimental minesweeper initially intended for testing various solver implementations, but have deviated to release as a just a game for players. Future solver implementations will be maintained in separate repository.
+beta state experimental minesweeper initially intended for testing various solver implementations, but have deviated to release as a just a game for players. Solver implementations and machine learning version can be found [here](https://github.com/denialpan/dansweeper-ml).
 
 ### features
 
